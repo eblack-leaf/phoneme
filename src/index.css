@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-brand: #a78bfa;
+  --color-brand-dim: #7c3aed;
+
+  --color-job-0: #f472b6;
+  --color-job-1: #38bdf8;
+  --color-job-2: #a3e635;
+  --color-job-3: #fb923c;
+  --color-job-4: #c084fc;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
