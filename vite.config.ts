@@ -7,4 +7,7 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  build: {
+    outDir: 'docs',
+  }
 });
