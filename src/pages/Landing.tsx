@@ -40,11 +40,6 @@ function cubicBezier(t: number, p0: number, p1: number, p2: number, p3: number):
   return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3;
 }
 
-function cubicBezierTangent(t: number, p0: number, p1: number, p2: number, p3: number): number {
-  const u = 1 - t;
-  return 3 * u * u * (p1 - p0) + 6 * u * t * (p2 - p1) + 3 * t * t * (p3 - p2);
-}
-
 function easeInOutQuart(t: number): number {
   return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 }
@@ -66,7 +61,6 @@ interface Particle {
   phase: number;
   alpha: number;
   delay: number;
-  rotation: number;
 }
 
 // --- Neural network diagram ---
@@ -145,7 +139,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Place particles near text with a scaled buffer zone
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
-  const step = Math.max(4, Math.round(8 * scale));
+  const step = Math.max(3, Math.round(6 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
@@ -157,8 +151,8 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
       let closestDist = reach + 1;
       const searchR = reach;
       outer:
-      for (let dy = -searchR; dy <= searchR; dy += 6) {
-        for (let dx = -searchR; dx <= searchR; dx += 6) {
+      for (let dy = -searchR; dy <= searchR; dy += 4) {
+        for (let dx = -searchR; dx <= searchR; dx += 4) {
           const nx2 = x + dx, ny2 = y + dy;
           if (nx2 >= 0 && nx2 < w && ny2 >= 0 && ny2 < h) {
             if (data[(ny2 * w + nx2) * 4] > 128) {
@@ -178,7 +172,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   }
 
   // Halo particles
-  const haloStep = 20;
+  const haloStep = 16;
   for (let y = 0; y < h; y += haloStep) {
     for (let x = 0; x < w; x += haloStep) {
       if (data[(y * w + x) * 4] > 128) continue;
@@ -192,7 +186,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
           }
         }
       }
-      if (nearText && Math.random() < 0.25) points.push({ nx: x / w, ny: y / h });
+      if (nearText && Math.random() < 0.3) points.push({ nx: x / w, ny: y / h });
     }
   }
 
@@ -228,6 +222,37 @@ export default function Landing() {
     let startTime = 0;
     let built = false;
     const DURATION = 3000;
+
+    // Glyph atlas: pre-rendered bitmaps keyed by "glyph|size"
+    let glyphAtlas = new Map<string, { canvas: HTMLCanvasElement; w: number; h: number }>();
+
+    function buildGlyphAtlas() {
+      glyphAtlas.clear();
+      const seen = new Set<string>();
+      for (const p of particles) {
+        const key = `${p.glyph}|${p.size}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        const offCanvas = document.createElement("canvas");
+        const offCtx = offCanvas.getContext("2d")!;
+        const font = `${p.size}px "JetBrains Mono", monospace`;
+        offCtx.font = font;
+        const metrics = offCtx.measureText(p.glyph);
+        const w = Math.ceil(metrics.width) + 4;
+        const h = Math.ceil(p.size) + 4;
+        offCanvas.width = w * dpr;
+        offCanvas.height = h * dpr;
+        offCtx.scale(dpr, dpr);
+        offCtx.font = font;
+        offCtx.textAlign = "center";
+        offCtx.textBaseline = "middle";
+        offCtx.fillStyle = "#d6d3d1";
+        offCtx.fillText(p.glyph, w / 2, h / 2);
+
+        glyphAtlas.set(key, { canvas: offCanvas, w, h });
+      }
+    }
 
     const diagram = buildDiagram();
     const DIAGRAM_DELAY = 3400;
@@ -300,7 +325,6 @@ export default function Landing() {
           phase: Math.random() * Math.PI * 2,
           alpha: 0.45 + Math.random() * 0.55,
           delay: bandT * 400 + Math.random() * 200,
-          rotation: 0,
         };
       });
     }
@@ -349,24 +373,6 @@ export default function Landing() {
       return {
         x: cubicBezier(t, sx, c1x, c2x, tx),
         y: cubicBezier(t, sy, c1y, c2y, ty),
-      };
-    }
-
-    function getTangent(p: Particle, t: number): { tdx: number; tdy: number } {
-      const sx = p.nsx * W;
-      const sy = p.nsy * H;
-      const tx = p.ntx * W;
-      const ty = p.nty * H;
-      const dx = tx - sx;
-      const dy = ty - sy;
-      const c1x = sx + dx * 0.25 + p.nc1dx * W;
-      const c1y = sy + dy * 0.25 + p.nc1dy * H;
-      const c2x = sx + dx * 0.7 + p.nc2dx * W;
-      const c2y = sy + dy * 0.7 + p.nc2dy * H;
-
-      return {
-        tdx: cubicBezierTangent(t, sx, c1x, c2x, tx),
-        tdy: cubicBezierTangent(t, sy, c1y, c2y, ty),
       };
     }
 
@@ -462,32 +468,21 @@ export default function Landing() {
         p.x = pos.x;
         p.y = pos.y;
 
-        const tan = getTangent(p, t);
-        p.rotation = Math.atan2(tan.tdy, tan.tdx);
-
         const fadeIn = Math.min(1, rawT * 4);
 
         let drawX = p.x;
         let drawY = p.y;
-        let drawRot = p.rotation;
         if (rawT >= 1) {
-          // Settled: use target directly (in case resize moved it)
           drawX = p.ntx * W + Math.sin(now * 0.0008 + p.phase) * 0.6;
           drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 0.5;
-          const settledTime = (elapsed - p.delay - DURATION) * 0.002;
-          drawRot = p.rotation * (1 - Math.min(1, settledTime));
         }
 
-        ctx.save();
-        ctx.translate(drawX, drawY);
-        ctx.rotate(drawRot * 0.3);
-        ctx.globalAlpha = p.alpha * fadeIn;
-        ctx.font = `${p.size}px "JetBrains Mono", monospace`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#d6d3d1";
-        ctx.fillText(p.glyph, 0, 0);
-        ctx.restore();
+        const atlas = glyphAtlas.get(`${p.glyph}|${p.size}`);
+        if (atlas) {
+          ctx.globalAlpha = p.alpha * fadeIn;
+          ctx.drawImage(atlas.canvas, 0, 0, atlas.canvas.width, atlas.canvas.height,
+            drawX - atlas.w / 2, drawY - atlas.h / 2, atlas.w, atlas.h);
+        }
       }
 
       ctx.globalAlpha = 1;
@@ -504,6 +499,7 @@ export default function Landing() {
       sizeCanvas();
       if (!built) {
         buildParticles();
+        buildGlyphAtlas();
         startTime = performance.now();
         built = true;
       } else {
