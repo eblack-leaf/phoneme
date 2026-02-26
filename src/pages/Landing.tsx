@@ -1,4 +1,5 @@
-import { onMount, onCleanup } from "solid-js";
+import { onMount, onCleanup, createSignal } from "solid-js";
+import { A } from "@solidjs/router";
 
 const GLYPHS = [
   "ə", "ʃ", "θ", "ð", "ŋ", "ʒ", "ɪ", "æ", "ʊ", "ɔ",
@@ -200,7 +201,19 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
 // --- Component ---
 export default function Landing() {
   let canvasRef: HTMLCanvasElement | undefined;
+  let scrollRef: HTMLDivElement | undefined;
+  let secondRef: HTMLDivElement | undefined;
+  let thirdRef: HTMLDivElement | undefined;
   let animId: number;
+  const [chevronVisible, setChevronVisible] = createSignal(false);
+
+  function scrollToNext() {
+    secondRef?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function scrollToUseCases() {
+    thirdRef?.scrollIntoView({ behavior: "smooth" });
+  }
 
   onMount(() => {
     const canvas = canvasRef!;
@@ -474,6 +487,12 @@ export default function Landing() {
       }
 
       ctx.globalAlpha = 1;
+
+      // Show chevron after particles settle + diagram starts drawing
+      if (!chevronVisible() && elapsed > DURATION + 800) {
+        setChevronVisible(true);
+      }
+
       animId = requestAnimationFrame(draw);
     }
 
@@ -493,15 +512,364 @@ export default function Landing() {
     animId = requestAnimationFrame(draw);
 
     window.addEventListener("resize", handleResize);
+
+    // Hash-based scroll: if URL has #use-cases, scroll to that section
+    if (window.location.hash === "#use-cases") {
+      setTimeout(() => {
+        thirdRef?.scrollIntoView({ behavior: "instant" });
+      }, 100);
+    }
+
+    // Keep URL hash in sync with visible section so browser back works
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            history.replaceState(null, "", "/#use-cases");
+          } else if (window.location.hash === "#use-cases") {
+            history.replaceState(null, "", "/");
+          }
+        }
+      },
+      { threshold: 0.3 },
+    );
+    if (thirdRef) observer.observe(thirdRef);
+
     onCleanup(() => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
+      observer.disconnect();
     });
   });
 
   return (
-    <div class="relative h-screen w-full overflow-hidden bg-zinc-950">
-      <canvas ref={canvasRef} class="absolute inset-0" />
+    <div
+      ref={scrollRef}
+      class="h-screen w-full overflow-y-auto bg-zinc-950"
+      style="scroll-snap-type: y mandatory;"
+    >
+      {/* Hero section */}
+      <div class="relative h-screen w-full shrink-0" style="scroll-snap-align: start;">
+        <canvas ref={canvasRef} class="absolute inset-0" />
+
+        {/* Chevron */}
+        <button
+          onClick={scrollToNext}
+          class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 transition-opacity duration-700 cursor-pointer"
+          classList={{ "opacity-0 pointer-events-none": !chevronVisible(), "opacity-100": chevronVisible() }}
+          style="z-index: 10;"
+        >
+          <span
+            class="text-stone-400 text-xs tracking-[0.2em] uppercase"
+            style='font-family: "JetBrains Mono", monospace;'
+          >
+            Explore
+          </span>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-stone-400 animate-bounce"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Explore section */}
+      <div
+        ref={secondRef}
+        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-20"
+        style="scroll-snap-align: start;"
+      >
+        <div class="max-w-2xl w-full" style='font-family: "JetBrains Mono", monospace;'>
+          {/* Dictionary entry */}
+          <div class="mb-16">
+            <h2 class="text-stone-200 text-3xl sm:text-4xl font-bold tracking-tight mb-1">
+              phoneme
+            </h2>
+            <p class="text-stone-500 text-sm mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
+            <div class="border-l-2 border-stone-700 pl-4">
+              <p class="text-stone-400 text-sm leading-relaxed">
+                The smallest unit of sound in a language that distinguishes one word from another.
+              </p>
+              <p class="text-stone-600 text-xs mt-2 italic">
+                e.g. the /p/ in "pat" vs the /b/ in "bat"
+              </p>
+            </div>
+          </div>
+
+          {/* Project description */}
+          <div class="space-y-5 text-stone-400 text-sm leading-relaxed">
+            <p>
+              A phoneme is the irreducible unit of language. We apply the same principle to
+              models: find the minimal architecture that solves the task, then train it
+              on-device. No surplus parameters. No cloud dependency.
+            </p>
+            <p>
+              Data never leaves the device. Training runs locally — on the hardware you
+              already carry. No telemetry, no third-party inference, no round-trips to
+              someone else's cluster.
+            </p>
+            <p>
+              One task, one model, one device. The minimum viable intelligence for the job.
+            </p>
+          </div>
+        </div>
+
+        {/* Chevron to use cases */}
+        <button
+          onClick={scrollToUseCases}
+          class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
+          style="z-index: 10;"
+        >
+          <span
+            class="text-stone-400 text-xs tracking-[0.2em] uppercase"
+            style='font-family: "JetBrains Mono", monospace;'
+          >
+            Use Cases
+          </span>
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-stone-400 animate-bounce"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Use Cases section */}
+      <div
+        ref={thirdRef}
+        class="relative min-h-screen w-full shrink-0 flex flex-col items-center justify-center px-6 py-20"
+        style="scroll-snap-align: start;"
+      >
+        <h2
+          class="text-stone-200 text-2xl sm:text-3xl font-bold tracking-tight mb-16 text-center"
+          style='font-family: "JetBrains Mono", monospace;'
+        >
+          USE CASES
+        </h2>
+
+        <div class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1 */}
+          <div>
+            <div
+              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              style='font-family: "JetBrains Mono", monospace;'
+            >
+              {/* LSTM + PPO diagram */}
+              <svg viewBox="15 5 300 95" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
+                {/* Input nodes */}
+                <circle cx="30" cy="30" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="30" cy="50" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="30" cy="70" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="30" y="90" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">IR feat.</text>
+
+                {/* Connections input → LSTM */}
+                <line x1="36" y1="30" x2="94" y2="40" stroke="#44403c" stroke-width="0.8" />
+                <line x1="36" y1="50" x2="94" y2="50" stroke="#44403c" stroke-width="0.8" />
+                <line x1="36" y1="70" x2="94" y2="60" stroke="#44403c" stroke-width="0.8" />
+
+                {/* LSTM cell */}
+                <rect x="95" y="30" width="50" height="40" rx="4" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="120" y="54" text-anchor="middle" fill="#a8a29e" font-size="9" font-family="JetBrains Mono, monospace">LSTM</text>
+                {/* Recurrence arrow */}
+                <path d="M145 45 Q160 45 160 30 Q160 15 120 15 Q95 15 95 35" fill="none" stroke="#78716c" stroke-width="0.8" />
+                <polygon points="95,33 92,28 98,28" fill="#78716c" />
+
+                {/* Connections LSTM → heads */}
+                <line x1="145" y1="42" x2="195" y2="35" stroke="#44403c" stroke-width="0.8" />
+                <line x1="145" y1="58" x2="195" y2="65" stroke="#44403c" stroke-width="0.8" />
+
+                {/* Policy head */}
+                <circle cx="200" cy="35" r="8" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="200" y="38" text-anchor="middle" fill="#a8a29e" font-size="6" font-family="JetBrains Mono, monospace">π</text>
+                <text x="200" y="22" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">policy</text>
+
+                {/* Value head */}
+                <circle cx="200" cy="65" r="8" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="200" y="68" text-anchor="middle" fill="#a8a29e" font-size="6" font-family="JetBrains Mono, monospace">V</text>
+                <text x="200" y="82" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">value</text>
+
+                {/* Arrow to action */}
+                <line x1="208" y1="35" x2="250" y2="50" stroke="#44403c" stroke-width="0.8" />
+                <line x1="208" y1="65" x2="250" y2="50" stroke="#44403c" stroke-width="0.8" />
+                <rect x="250" y="40" width="55" height="20" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="277" y="54" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">pass sel.</text>
+              </svg>
+
+              <h3 class="text-stone-200 text-sm font-bold mb-2">LLVM Pass Optimization</h3>
+              <p class="text-stone-500 text-xs leading-relaxed mb-3">
+                LSTM + PPO online learning. Input: IR features extracted per function.
+                Reward signal: measured speedup vs. <span class="text-stone-400">-O3</span>. Learns a
+                per-program pass ordering policy on-device.
+              </p>
+              <A
+                href="/work/llvm"
+                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors"
+              >
+                View project
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </A>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div>
+            <div
+              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              style='font-family: "JetBrains Mono", monospace;'
+            >
+              {/* Text classifier diagram */}
+              <svg viewBox="0 15 300 75" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
+                {/* Embedding block */}
+                <rect x="10" y="30" width="45" height="40" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="32" y="54" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">embed</text>
+
+                {/* Arrow */}
+                <line x1="55" y1="50" x2="80" y2="50" stroke="#44403c" stroke-width="0.8" />
+
+                {/* Conv1D layers */}
+                <rect x="80" y="25" width="40" height="50" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="100" y="47" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">conv</text>
+                <text x="100" y="57" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">1D</text>
+
+                <line x1="120" y1="50" x2="140" y2="50" stroke="#44403c" stroke-width="0.8" />
+
+                <rect x="140" y="30" width="35" height="40" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="157" y="47" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">conv</text>
+                <text x="157" y="57" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">1D</text>
+
+                <line x1="175" y1="50" x2="200" y2="50" stroke="#44403c" stroke-width="0.8" />
+
+                {/* Dense */}
+                <rect x="200" y="35" width="40" height="30" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="220" y="54" text-anchor="middle" fill="#a8a29e" font-size="7" font-family="JetBrains Mono, monospace">dense</text>
+
+                <line x1="240" y1="50" x2="265" y2="50" stroke="#44403c" stroke-width="0.8" />
+
+                {/* Output classes */}
+                <circle cx="280" cy="35" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="280" cy="50" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="280" cy="65" r="6" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <line x1="265" y1="50" x2="274" y2="35" stroke="#44403c" stroke-width="0.8" />
+                <line x1="265" y1="50" x2="274" y2="65" stroke="#44403c" stroke-width="0.8" />
+                <text x="280" y="82" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">classes</text>
+              </svg>
+
+              <h3 class="text-stone-200 text-sm font-bold mb-2">On-Device Text Classification</h3>
+              <p class="text-stone-500 text-xs leading-relaxed">
+                Small CNN or lightweight transformer for local intent detection and spam
+                filtering. Runs entirely on-device — no data leaves, no cloud inference.
+                Fine-tune on user-specific patterns without exfiltrating training data.
+              </p>
+              <A
+                href="/work/text-classification"
+                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors mt-3"
+              >
+                View project
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </A>
+            </div>
+          </div>
+
+          {/* Card 3 */}
+          <div>
+            <div
+              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              style='font-family: "JetBrains Mono", monospace;'
+            >
+              {/* Autoencoder diagram */}
+              <svg viewBox="10 5 265 90" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
+                {/* Input */}
+                <circle cx="25" cy="25" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="25" cy="40" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="25" cy="55" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="25" cy="70" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="25" y="88" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">input</text>
+
+                {/* Encoder narrowing */}
+                {["25","40","55","70"].map(y => <>
+                  <line x1="30" y1={y} x2="75" y2="35" stroke="#44403c" stroke-width="0.5" />
+                  <line x1="30" y1={y} x2="75" y2="50" stroke="#44403c" stroke-width="0.5" />
+                  <line x1="30" y1={y} x2="75" y2="65" stroke="#44403c" stroke-width="0.5" />
+                </>)}
+                <circle cx="80" cy="35" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="80" cy="50" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="80" cy="65" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+
+                {/* To bottleneck */}
+                <line x1="85" y1="35" x2="135" y2="42" stroke="#44403c" stroke-width="0.5" />
+                <line x1="85" y1="50" x2="135" y2="48" stroke="#44403c" stroke-width="0.5" />
+                <line x1="85" y1="65" x2="135" y2="55" stroke="#44403c" stroke-width="0.5" />
+
+                {/* Bottleneck */}
+                <circle cx="140" cy="42" r="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
+                <circle cx="140" cy="55" r="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
+                <text x="140" y="20" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">latent</text>
+
+                {/* Decoder widening */}
+                <line x1="145" y1="42" x2="195" y2="35" stroke="#44403c" stroke-width="0.5" />
+                <line x1="145" y1="48" x2="195" y2="50" stroke="#44403c" stroke-width="0.5" />
+                <line x1="145" y1="55" x2="195" y2="65" stroke="#44403c" stroke-width="0.5" />
+                <circle cx="200" cy="35" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="200" cy="50" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="200" cy="65" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+
+                {/* To reconstruction */}
+                {["35","50","65"].map(y => <>
+                  <line x1="205" y1={y} x2="255" y2="25" stroke="#44403c" stroke-width="0.5" />
+                  <line x1="205" y1={y} x2="255" y2="40" stroke="#44403c" stroke-width="0.5" />
+                  <line x1="205" y1={y} x2="255" y2="55" stroke="#44403c" stroke-width="0.5" />
+                  <line x1="205" y1={y} x2="255" y2="70" stroke="#44403c" stroke-width="0.5" />
+                </>)}
+                <circle cx="260" cy="25" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="260" cy="40" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="260" cy="55" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <circle cx="260" cy="70" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
+                <text x="260" y="88" text-anchor="middle" fill="#78716c" font-size="7" font-family="JetBrains Mono, monospace">recon.</text>
+
+                {/* Labels */}
+                <text x="55" y="88" text-anchor="middle" fill="#78716c" font-size="6" font-family="JetBrains Mono, monospace">encoder</text>
+                <text x="220" y="88" text-anchor="middle" fill="#78716c" font-size="6" font-family="JetBrains Mono, monospace">decoder</text>
+              </svg>
+
+              <h3 class="text-stone-200 text-sm font-bold mb-2">Sensor Anomaly Detection</h3>
+              <p class="text-stone-500 text-xs leading-relaxed">
+                Autoencoder trained on-device for edge IoT. Learns normal sensor patterns
+                during a calibration window, then flags deviations in real-time.
+                No labeled data required — reconstruction error is the anomaly signal.
+              </p>
+              <A
+                href="/work/anomaly-detection"
+                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors mt-3"
+              >
+                View project
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </A>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
