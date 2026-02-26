@@ -153,7 +153,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
   const isMobile = w < 640;
-  const step = isMobile ? Math.max(4, Math.round(6 * scale)) : Math.max(3, Math.round(6 * scale));
+  const step = Math.max(3, Math.round(6 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
