@@ -61,7 +61,20 @@ interface Particle {
   phase: number;
   alpha: number;
   delay: number;
+  colorIdx: number;
 }
+
+// Orange-to-yellow gradient palette for particles (left → right)
+const GLYPH_PALETTE = [
+  "#c2410c", // orange-700
+  "#ea580c", // orange-600
+  "#f97316", // orange-500
+  "#fb923c", // orange-400
+  "#f59e0b", // amber-500
+  "#fbbf24", // amber-400
+  "#fcd34d", // amber-300
+  "#fde68a", // amber-200
+];
 
 // --- Neural network diagram ---
 interface NNNode { x: number; y: number; label: string; r: number; }
@@ -223,14 +236,14 @@ export default function Landing() {
     let built = false;
     const DURATION = 3000;
 
-    // Glyph atlas: pre-rendered bitmaps keyed by "glyph|size"
+    // Glyph atlas: pre-rendered bitmaps keyed by "glyph|size|colorIdx"
     let glyphAtlas = new Map<string, { canvas: HTMLCanvasElement; w: number; h: number }>();
 
     function buildGlyphAtlas() {
       glyphAtlas.clear();
       const seen = new Set<string>();
       for (const p of particles) {
-        const key = `${p.glyph}|${p.size}`;
+        const key = `${p.glyph}|${p.size}|${p.colorIdx}`;
         if (seen.has(key)) continue;
         seen.add(key);
 
@@ -247,7 +260,7 @@ export default function Landing() {
         offCtx.font = font;
         offCtx.textAlign = "center";
         offCtx.textBaseline = "middle";
-        offCtx.fillStyle = "#d6d3d1";
+        offCtx.fillStyle = GLYPH_PALETTE[p.colorIdx];
         offCtx.fillText(p.glyph, w / 2, h / 2);
 
         glyphAtlas.set(key, { canvas: offCanvas, w, h });
@@ -325,8 +338,22 @@ export default function Landing() {
           phase: Math.random() * Math.PI * 2,
           alpha: 0.45 + Math.random() * 0.55,
           delay: bandT * 400 + Math.random() * 200,
+          colorIdx: 0, // assigned after all particles built
         };
       });
+
+      // Assign gradient color left-to-right based on target x position
+      // Left = deep orange, right = yellow
+      let minX = Infinity, maxX = -Infinity;
+      for (const p of particles) {
+        if (p.ntx < minX) minX = p.ntx;
+        if (p.ntx > maxX) maxX = p.ntx;
+      }
+      const rangeX = maxX - minX || 1;
+      for (const p of particles) {
+        const norm = (p.ntx - minX) / rangeX;
+        p.colorIdx = Math.min(GLYPH_PALETTE.length - 1, Math.floor(norm * GLYPH_PALETTE.length));
+      }
     }
 
     // On resize: resample the word boundary at the new viewport size and
@@ -477,7 +504,7 @@ export default function Landing() {
           drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 0.5;
         }
 
-        const atlas = glyphAtlas.get(`${p.glyph}|${p.size}`);
+        const atlas = glyphAtlas.get(`${p.glyph}|${p.size}|${p.colorIdx}`);
         if (atlas) {
           ctx.globalAlpha = p.alpha * fadeIn;
           ctx.drawImage(atlas.canvas, 0, 0, atlas.canvas.width, atlas.canvas.height,
@@ -557,9 +584,9 @@ export default function Landing() {
         {/* Chevron */}
         <button
           onClick={scrollToNext}
-          class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 transition-opacity duration-700 cursor-pointer"
+          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 transition-opacity duration-700 cursor-pointer"
           classList={{ "opacity-0 pointer-events-none": !chevronVisible(), "opacity-100": chevronVisible() }}
-          style="z-index: 10;"
+          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
         >
           <span
             class="text-stone-400 text-xs tracking-[0.2em] uppercase"
@@ -592,11 +619,11 @@ export default function Landing() {
         <div class="max-w-2xl w-full" style='font-family: "JetBrains Mono", monospace;'>
           {/* Dictionary entry */}
           <div class="mb-16">
-            <h2 class="text-stone-200 text-3xl sm:text-4xl font-bold tracking-tight mb-1">
+            <h2 class="text-orange-400 text-3xl sm:text-4xl font-bold tracking-tight mb-1">
               phoneme
             </h2>
-            <p class="text-stone-500 text-sm mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
-            <div class="border-l-2 border-stone-700 pl-4">
+            <p class="text-orange-700 text-sm mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
+            <div class="border-l-2 border-orange-800 pl-4">
               <p class="text-stone-400 text-sm leading-relaxed">
                 The smallest unit of sound in a language that distinguishes one word from another.
               </p>
@@ -627,8 +654,8 @@ export default function Landing() {
         {/* Chevron to use cases */}
         <button
           onClick={scrollToUseCases}
-          class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
-          style="z-index: 10;"
+          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
+          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
         >
           <span
             class="text-stone-400 text-xs tracking-[0.2em] uppercase"
@@ -659,7 +686,7 @@ export default function Landing() {
         style="scroll-snap-align: start;"
       >
         <h2
-          class="text-stone-200 text-2xl sm:text-3xl font-bold tracking-tight mb-16 text-center"
+          class="text-orange-400 text-2xl sm:text-3xl font-bold tracking-tight mb-16 text-center"
           style='font-family: "JetBrains Mono", monospace;'
         >
           USE CASES
@@ -669,7 +696,7 @@ export default function Landing() {
           {/* Card 1 */}
           <div>
             <div
-              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              class="border border-orange-900/40 rounded-lg p-6 bg-zinc-950/80"
               style='font-family: "JetBrains Mono", monospace;'
             >
               {/* LSTM + PPO diagram */}
@@ -713,7 +740,7 @@ export default function Landing() {
                 <text x="187" y="65" text-anchor="middle" fill="#a8a29e" font-size="8" font-family="JetBrains Mono, monospace">pass sel.</text>
               </svg>
 
-              <h3 class="text-stone-200 text-sm font-bold mb-2">LLVM Pass Optimization</h3>
+              <h3 class="text-orange-300 text-sm font-bold mb-2">LLVM Pass Optimization</h3>
               <p class="text-stone-500 text-xs leading-relaxed mb-3">
                 LSTM + PPO online learning. Input: IR features extracted per function.
                 Reward signal: measured speedup vs. <span class="text-stone-400">-O3</span>. Learns a
@@ -721,7 +748,7 @@ export default function Landing() {
               </p>
               <A
                 href="/work/llvm"
-                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors"
+                class="inline-flex items-center gap-1.5 text-orange-600 text-xs hover:text-orange-400 transition-colors"
               >
                 View project
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -734,11 +761,11 @@ export default function Landing() {
           {/* Card 2 */}
           <div>
             <div
-              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              class="border border-orange-900/40 rounded-lg p-6 bg-zinc-950/80"
               style='font-family: "JetBrains Mono", monospace;'
             >
               {/* Text classifier diagram */}
-              <svg viewBox="0 0 200 150" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
+              <svg viewBox="0 0 220 150" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
                 {/* Embedding block */}
                 <rect x="8" y="40" width="35" height="45" rx="3" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <text x="25" y="67" text-anchor="middle" fill="#a8a29e" font-size="9" font-family="JetBrains Mono, monospace">embed</text>
@@ -775,7 +802,7 @@ export default function Landing() {
                 <text x="190" y="106" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">classes</text>
               </svg>
 
-              <h3 class="text-stone-200 text-sm font-bold mb-2">On-Device Text Classification</h3>
+              <h3 class="text-orange-300 text-sm font-bold mb-2">On-Device Text Classification</h3>
               <p class="text-stone-500 text-xs leading-relaxed">
                 Small CNN or lightweight transformer for local intent detection and spam
                 filtering. Runs entirely on-device — no data leaves, no cloud inference.
@@ -783,7 +810,7 @@ export default function Landing() {
               </p>
               <A
                 href="/work/text-classification"
-                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors mt-3"
+                class="inline-flex items-center gap-1.5 text-orange-600 text-xs hover:text-orange-400 transition-colors mt-3"
               >
                 View project
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -796,17 +823,17 @@ export default function Landing() {
           {/* Card 3 */}
           <div>
             <div
-              class="border border-stone-800 rounded-lg p-6 bg-zinc-950/80"
+              class="border border-orange-900/40 rounded-lg p-6 bg-zinc-950/80"
               style='font-family: "JetBrains Mono", monospace;'
             >
               {/* Autoencoder diagram */}
-              <svg viewBox="0 0 200 150" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
+              <svg viewBox="0 0 200 140" class="w-full mb-4" xmlns="http://www.w3.org/2000/svg">
                 {/* Input */}
                 <circle cx="18" cy="30" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="18" cy="52" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="18" cy="74" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="18" cy="96" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
-                <text x="18" y="118" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">input</text>
+                <text x="18" y="116" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">input</text>
 
                 {/* Encoder narrowing */}
                 {["30","52","74","96"].map(y => <>
@@ -817,7 +844,7 @@ export default function Landing() {
                 <circle cx="58" cy="42" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="58" cy="63" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="58" cy="84" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
-                <text x="40" y="118" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">encoder</text>
+                <text x="58" y="128" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">encoder</text>
 
                 {/* To bottleneck */}
                 <line x1="63" y1="42" x2="93" y2="53" stroke="#44403c" stroke-width="0.5" />
@@ -827,7 +854,7 @@ export default function Landing() {
                 {/* Bottleneck */}
                 <circle cx="100" cy="53" r="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
                 <circle cx="100" cy="73" r="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-                <text x="100" y="28" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">latent</text>
+                <text x="100" y="28" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">latent</text>
 
                 {/* Decoder widening */}
                 <line x1="105" y1="53" x2="137" y2="42" stroke="#44403c" stroke-width="0.5" />
@@ -836,7 +863,7 @@ export default function Landing() {
                 <circle cx="142" cy="42" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="142" cy="63" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="142" cy="84" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
-                <text x="160" y="118" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">decoder</text>
+                <text x="142" y="128" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">decoder</text>
 
                 {/* To reconstruction */}
                 {["42","63","84"].map(y => <>
@@ -849,10 +876,10 @@ export default function Landing() {
                 <circle cx="182" cy="52" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="182" cy="74" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
                 <circle cx="182" cy="96" r="5" fill="none" stroke="#a8a29e" stroke-width="1" />
-                <text x="182" y="118" text-anchor="middle" fill="#78716c" font-size="9" font-family="JetBrains Mono, monospace">recon.</text>
+                <text x="182" y="116" text-anchor="middle" fill="#78716c" font-size="8" font-family="JetBrains Mono, monospace">recon.</text>
               </svg>
 
-              <h3 class="text-stone-200 text-sm font-bold mb-2">Sensor Anomaly Detection</h3>
+              <h3 class="text-orange-300 text-sm font-bold mb-2">Sensor Anomaly Detection</h3>
               <p class="text-stone-500 text-xs leading-relaxed">
                 Autoencoder trained on-device for edge IoT. Learns normal sensor patterns
                 during a calibration window, then flags deviations in real-time.
@@ -860,7 +887,7 @@ export default function Landing() {
               </p>
               <A
                 href="/work/anomaly-detection"
-                class="inline-flex items-center gap-1.5 text-stone-400 text-xs hover:text-stone-200 transition-colors mt-3"
+                class="inline-flex items-center gap-1.5 text-orange-600 text-xs hover:text-orange-400 transition-colors mt-3"
               >
                 View project
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
