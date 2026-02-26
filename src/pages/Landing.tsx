@@ -490,16 +490,20 @@ export default function Landing() {
 
       drawDiagram(elapsed);
 
-      // Solid dark rectangle exactly behind the "Phoneme" word.
-      const fontSize = Math.min(W * 0.18, 140);
-      ctx.font = `700 ${fontSize}px "JetBrains Mono", monospace`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const textW = ctx.measureText("Phoneme").width;
-      const padX = fontSize * 0.04;
-      const padY = fontSize * 0.08;
-      ctx.fillStyle = "rgb(9,9,11)";
-      ctx.fillRect(W / 2 - textW / 2 - padX, H / 2 - fontSize / 2 - padY, textW + padX * 2, fontSize + padY * 2);
+      // Elliptical vignette: fully opaque center, feathers to transparent.
+      // scaleY < 1 squishes the circle into a short wide ellipse.
+      const scaleY = 0.5;
+      const vr = W * 0.30;
+      ctx.save();
+      ctx.scale(1, scaleY);
+      const vignette = ctx.createRadialGradient(W / 2, H / 2 / scaleY, 0, W / 2, H / 2 / scaleY, vr);
+      vignette.addColorStop(0,    "rgba(9,9,11,1)");
+      vignette.addColorStop(0.40, "rgba(9,9,11,1)");
+      vignette.addColorStop(0.85, "rgba(9,9,11,0)");
+      vignette.addColorStop(1,    "rgba(9,9,11,0)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, W, H / scaleY);
+      ctx.restore();
 
       for (const p of particles) {
         const rawT = Math.max(0, Math.min(1, (elapsed - p.delay) / DURATION));
