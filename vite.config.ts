@@ -7,7 +7,7 @@ export default defineConfig({
   worker: {
     format: "es",
   },
-  base: "phoneme",
+  base: "/phoneme/",
   build: {
     outDir: 'docs',
   }
