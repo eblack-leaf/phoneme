@@ -1,12 +1,23 @@
 import { render } from "solid-js/web";
-import { Router } from "@solidjs/router";
+import { Router, Route } from "@solidjs/router";
+import { lazy } from "solid-js";
 import App from "./App";
 import "./index.css";
 
+const Landing = lazy(() => import("./pages/Landing"));
+const Demo = lazy(() => import("./pages/Demo"));
+const WorkLLVM = lazy(() => import("./pages/WorkLLVM"));
+const WorkScheduler = lazy(() => import("./pages/WorkScheduler"));
+const About = lazy(() => import("./pages/About"));
+
 render(
   () => (
-    <Router>
-      <App />
+    <Router root={App}>
+      <Route path="/" component={Landing} />
+      <Route path="/demo" component={Demo} />
+      <Route path="/work/llvm" component={WorkLLVM} />
+      <Route path="/work/scheduler" component={WorkScheduler} />
+      <Route path="/about" component={About} />
     </Router>
   ),
   document.getElementById("root")!,
