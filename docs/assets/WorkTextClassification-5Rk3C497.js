@@ -1,1 +1,0 @@
-import{t}from"./index-GUZfLLi-.js";var a=t("<div>WorkTextClassification");function o(){return a()}export{o as default};

@@ -490,6 +490,17 @@ export default function Landing() {
 
       drawDiagram(elapsed);
 
+      // Solid dark rectangle exactly behind the "Phoneme" word.
+      const fontSize = Math.min(W * 0.18, 140);
+      ctx.font = `700 ${fontSize}px "JetBrains Mono", monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const textW = ctx.measureText("Phoneme").width;
+      const padX = fontSize * 0.04;
+      const padY = fontSize * 0.08;
+      ctx.fillStyle = "rgb(9,9,11)";
+      ctx.fillRect(W / 2 - textW / 2 - padX, H / 2 - fontSize / 2 - padY, textW + padX * 2, fontSize + padY * 2);
+
       for (const p of particles) {
         const rawT = Math.max(0, Math.min(1, (elapsed - p.delay) / DURATION));
         const t = easeInOutQuart(rawT);
