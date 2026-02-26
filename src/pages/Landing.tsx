@@ -70,7 +70,8 @@ interface Particle {
 // --- Neural network diagram ---
 interface NNNode { x: number; y: number; label: string; r: number; }
 interface NNEdge { from: number; to: number; }
-interface NNAnnotation { x: number; y: number; text: string; align?: CanvasTextAlign; }
+interface NNAnnotation { x: number; y: number; text: string; align?: CanvasTextAlign; size?: number; }
+interface NNWeight { x: number; y: number; text: string; }
 
 function buildDiagram() {
   const nodes: NNNode[] = [];
@@ -89,20 +90,34 @@ function buildDiagram() {
   for (let i = 9; i < 12; i++) for (let j = 12; j < 15; j++) edges.push({ from: i, to: j });
 
   const annotations: NNAnnotation[] = [
-    { x: inX, y: 0.18, text: "INPUT FEATURES" },
-    { x: hX, y: 0.13, text: "DENSE(64, ReLU)" },
-    { x: oX, y: 0.25, text: "ACTOR / CRITIC" },
-    { x: aX, y: 0.25, text: "ATTENTION" },
-    { x: 0.25, y: 0.82, text: "wᵢⱼ ← wᵢⱼ − α·∂L/∂wᵢⱼ" },
-    { x: 0.55, y: 0.82, text: "σ(z) = max(0, z)" },
-    { x: 0.80, y: 0.82, text: "softmax(QKᵀ/√d)·V" },
-    { x: 0.25, y: 0.88, text: "L = −Ê[min(rₜAₜ, clip(rₜ)Aₜ)]", align: "center" },
-    { x: 0.60, y: 0.88, text: "Aₜ = δₜ + (γλ)δₜ₊₁ + ..." },
-    { x: 0.12, y: 0.75, text: "∇θ J(θ)", align: "center" },
-    { x: 0.85, y: 0.75, text: "ε = 0.2", align: "center" },
+    // Layer labels — above each column
+    { x: inX, y: 0.17, text: "INPUT FEATURES" },
+    { x: hX, y: 0.12, text: "DENSE(64, ReLU)" },
+    { x: oX, y: 0.24, text: "ACTOR / CRITIC" },
+    { x: aX, y: 0.24, text: "ATTENTION" },
+    // Bottom equations — spread across 3 rows to avoid clumping at narrow widths
+    { x: 0.15, y: 0.76, text: "∇θ J(θ)", align: "center" },
+    { x: 0.50, y: 0.76, text: "σ(z) = max(0, z)", align: "center" },
+    { x: 0.85, y: 0.76, text: "ε = 0.2", align: "center" },
+    { x: 0.20, y: 0.82, text: "wᵢⱼ ← wᵢⱼ − α·∂L/∂wᵢⱼ", align: "center" },
+    { x: 0.72, y: 0.82, text: "softmax(QKᵀ/√d)·V", align: "center" },
+    { x: 0.20, y: 0.88, text: "L = −Ê[min(rₜAₜ, clip(rₜ)Aₜ)]", align: "center" },
+    { x: 0.72, y: 0.88, text: "Aₜ = δₜ + (γλ)δₜ₊₁ + ...", align: "center" },
   ];
 
-  return { nodes, edges, annotations };
+  // Weight labels scattered near select edges
+  const weights: NNWeight[] = [
+    { x: (inX + hX) / 2 - 0.02, y: 0.26, text: "0.73" },
+    { x: (inX + hX) / 2 + 0.03, y: 0.42, text: "−0.41" },
+    { x: (inX + hX) / 2 - 0.01, y: 0.58, text: "1.08" },
+    { x: (hX + oX) / 2 + 0.02, y: 0.30, text: "0.22" },
+    { x: (hX + oX) / 2 - 0.02, y: 0.50, text: "−0.67" },
+    { x: (hX + oX) / 2 + 0.01, y: 0.62, text: "0.95" },
+    { x: (oX + aX) / 2, y: 0.38, text: "0.54" },
+    { x: (oX + aX) / 2 - 0.01, y: 0.56, text: "−0.33" },
+  ];
+
+  return { nodes, edges, annotations, weights };
 }
 
 // --- Sample word boundary as normalized points (0-1) ---
@@ -128,9 +143,9 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Place particles near text with a scaled buffer zone
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
-  const step = Math.max(3, Math.round(5 * scale));
-  const buffer = 3;
-  const reach = Math.max(10, Math.round(18 * scale));
+  const step = Math.max(2, Math.round(4 * scale));
+  const buffer = 2;
+  const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
     for (let x = 0; x < w; x += step) {
       // Skip if this pixel IS text
@@ -215,69 +230,90 @@ export default function Landing() {
     function buildParticles() {
       const targets = sampleWordBoundaryNormalized(W, H);
 
-      // Normalized origin: center, slightly above middle
-      const originNX = 0.5;
-      const originNY = 0.47;
-      const clusterR = 0.06; // normalized radius
+      // Particles enter from off-screen left as a grouped stream.
+      // They're sorted by target-y so nearby particles start near each other,
+      // giving a coherent river-like flow instead of random scatter.
+      const sorted = targets.slice().sort((a, b) => a.ny - b.ny);
 
-      const windAngle = -0.3;
-      const windN = 0.35; // normalized wind strength
+      // Stream parameters
+      const streamCenterY = 0.5;    // vertical center of the stream
+      const streamSpreadY = 0.18;   // how tall the stream band is
+      const startXBase = -0.08;     // just off-screen left
+      const startXSpread = 0.06;    // depth variation in the stream
 
-      particles = targets.map((tgt) => {
-        const a = Math.random() * Math.PI * 2;
-        const r = Math.random() * clusterR;
-        const nsx = originNX + Math.cos(a) * r;
-        const nsy = originNY + Math.sin(a) * r;
+      particles = sorted.map((tgt, i) => {
+        // Map index to a position in the stream band
+        const bandT = sorted.length > 1 ? i / (sorted.length - 1) : 0.5;
+        const bandY = streamCenterY + (bandT - 0.5) * streamSpreadY;
 
-        const noiseScale = 4; // noise on normalized coords
+        // Add noise so it's not a perfect line
+        const noiseScale = 4;
         const n1 = fbm(tgt.nx * noiseScale + 5.1, tgt.ny * noiseScale + 2.3) * 2 - 1;
         const n2 = fbm(tgt.nx * noiseScale + 11.7, tgt.ny * noiseScale + 8.9) * 2 - 1;
 
+        const nsx = startXBase + Math.random() * startXSpread + n1 * 0.03;
+        const nsy = bandY + n2 * 0.04;
+
+        // Bezier control points: sweeping rightward arc
+        // c1 pushes the stream forward and slightly down/up for organic feel
+        // c2 guides into the final target position
         const dx = tgt.nx - nsx;
         const dy = tgt.ny - nsy;
         const len = Math.sqrt(dx * dx + dy * dy) || 0.001;
         const px = -dy / len;
         const py = dx / len;
-        const curveMag = len * 0.4;
 
-        // Control point offsets from the straight line (normalized)
-        const nc1dx = dx * 0.25 + Math.cos(windAngle) * windN * 0.3 + px * n1 * curveMag * 0.3 - dx * 0.25;
-        const nc1dy = dy * 0.25 + Math.sin(windAngle) * windN * 0.3 + py * n1 * curveMag * 0.3 - dy * 0.25;
-        const nc2dx = dx * 0.7 + px * n2 * curveMag * 0.6 - dx * 0.7;
-        const nc2dy = dy * 0.7 + py * n2 * curveMag * 0.6 - dy * 0.7;
-
-        // Wait, let me think about this more simply.
-        // c1 = start + (target-start)*0.25 + wind + noise_perp
-        // In normalized space, c1_normalized = nsx + dx*0.25 + windX + perpX
-        // The offset from the lerp point is: windX + perpX
-        // Store those offsets so on resize we just recompute c1 = nsx + dx*0.25 + offset
+        // c1: keep the stream cohesive in the first third — mostly horizontal push
+        const nc1dx = n1 * 0.04 + px * n1 * 0.03;
+        const nc1dy = n1 * 0.02 + py * n1 * 0.03;
+        // c2: fan out toward targets in the last third
+        const nc2dx = px * n2 * len * 0.25;
+        const nc2dy = py * n2 * len * 0.25;
 
         return {
           x: 0, y: 0,
           ntx: tgt.nx, nty: tgt.ny,
           nsx, nsy,
-          // Store the full control point offsets from start
-          nc1dx: Math.cos(windAngle) * windN * 0.3 + px * n1 * curveMag * 0.3,
-          nc1dy: Math.sin(windAngle) * windN * 0.3 + py * n1 * curveMag * 0.3,
-          nc2dx: px * n2 * curveMag * 0.6,
-          nc2dy: py * n2 * curveMag * 0.6,
+          nc1dx,
+          nc1dy,
+          nc2dx,
+          nc2dy,
           glyph: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
           size: Math.max(6, Math.min(W, 1400) / 1400 * 9 + Math.random() * 4),
           phase: Math.random() * Math.PI * 2,
           alpha: 0.45 + Math.random() * 0.55,
-          delay: Math.random() * 600,
+          delay: bandT * 400 + Math.random() * 200,
           rotation: 0,
         };
       });
     }
 
-    // On resize: the word is always centered at (0.5, 0.5) in normalized space
-    // and the font scales with width, so normalized positions stay roughly correct.
-    // We don't resample — just let the existing normalized coords render at the
-    // new pixel dimensions. The word shape in normalized space barely changes.
+    // On resize: resample the word boundary at the new viewport size and
+    // reassign each particle to the closest new target position.
     function remapParticles() {
-      // No-op: normalized coords (0-1) naturally adapt to new W/H.
-      // The word center is always (0.5, 0.5) so particles stay in the right place.
+      const newTargets = sampleWordBoundaryNormalized(W, H);
+      if (newTargets.length === 0) return;
+
+      // Build a simple greedy closest-match assignment
+      const used = new Uint8Array(newTargets.length);
+
+      for (const p of particles) {
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        for (let i = 0; i < newTargets.length; i++) {
+          if (used[i]) continue;
+          const dx = newTargets[i].nx - p.ntx;
+          const dy = newTargets[i].ny - p.nty;
+          const d = dx * dx + dy * dy;
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = i;
+          }
+        }
+        used[bestIdx] = 1;
+        p.ntx = newTargets[bestIdx].nx;
+        p.nty = newTargets[bestIdx].ny;
+      }
     }
 
     // Get pixel coords from normalized particle state at time t
@@ -324,9 +360,15 @@ export default function Landing() {
       const progress = Math.min(1, diagramElapsed / DIAGRAM_DRAW_DURATION);
       const t = progress * progress * (3 - 2 * progress);
 
-      const { nodes, edges, annotations } = diagram;
+      const { nodes, edges, annotations, weights } = diagram;
       const edgeCount = Math.floor(edges.length * t);
       const annotCount = Math.floor(annotations.length * t);
+      const weightCount = Math.floor(weights.length * Math.min(1, t * 1.2));
+
+      // Responsive font sizes
+      const annotFontSize = Math.max(11, Math.min(16, W * 0.012));
+      const weightFontSize = Math.max(8, Math.min(11, W * 0.008));
+      const nodeFontSize = Math.max(8, Math.min(11, W * 0.008));
 
       ctx.lineWidth = 1;
       for (let i = 0; i < edgeCount; i++) {
@@ -354,10 +396,23 @@ export default function Landing() {
         ctx.stroke();
         ctx.globalAlpha = 0.35;
         ctx.fillStyle = "#d6d3d1";
-        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.font = `${nodeFontSize}px "JetBrains Mono", monospace`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(n.label, nx, ny);
+      }
+
+      // Edge weight labels
+      for (let i = 0; i < weightCount; i++) {
+        const wt = weights[i];
+        const wtProgress = Math.min(1, (t - (i / weights.length) * 0.6) * 3);
+        if (wtProgress <= 0) continue;
+        ctx.globalAlpha = 0.28 * wtProgress;
+        ctx.fillStyle = "#d6d3d1";
+        ctx.font = `${weightFontSize}px "JetBrains Mono", monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(wt.text, wt.x * W, wt.y * H);
       }
 
       for (let i = 0; i < annotCount; i++) {
@@ -366,7 +421,8 @@ export default function Landing() {
         if (annotProgress <= 0) continue;
         ctx.globalAlpha = 0.4 * annotProgress;
         ctx.fillStyle = "#d6d3d1";
-        ctx.font = '14px "JetBrains Mono", monospace';
+        const size = a.size || annotFontSize;
+        ctx.font = `${size}px "JetBrains Mono", monospace`;
         ctx.textAlign = a.align || "center";
         ctx.textBaseline = "top";
         ctx.fillText(a.text, a.x * W, a.y * H);
