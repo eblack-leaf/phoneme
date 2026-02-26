@@ -153,7 +153,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
   const isMobile = w < 640;
-  const step = isMobile ? Math.max(5, Math.round(7 * scale)) : Math.max(3, Math.round(6 * scale));
+  const step = isMobile ? Math.max(4, Math.round(6 * scale)) : Math.max(3, Math.round(6 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
@@ -187,7 +187,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
 
   // Halo particles
   const haloStep = isMobile ? 24 : 16;
-  const haloChance = isMobile ? 0.12 : 0.3;
+  const haloChance = isMobile ? 0.2 : 0.3;
   for (let y = 0; y < h; y += haloStep) {
     for (let x = 0; x < w; x += haloStep) {
       if (data[(y * w + x) * 4] > 128) continue;
@@ -358,7 +358,7 @@ export default function Landing() {
       }
 
       // Cap particle count by viewport to keep mobile workload bounded
-      const maxParticles = W < 640 ? 280 : W < 1024 ? 500 : Infinity;
+      const maxParticles = W < 640 ? 420 : W < 1024 ? 500 : Infinity;
       if (particles.length > maxParticles) {
         const stride = particles.length / maxParticles;
         particles = Array.from({ length: maxParticles as number }, (_, i) =>
