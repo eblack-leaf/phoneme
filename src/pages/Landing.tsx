@@ -357,14 +357,6 @@ export default function Landing() {
         p.colorIdx = Math.min(GLYPH_PALETTE.length - 1, Math.floor(norm * GLYPH_PALETTE.length));
       }
 
-      // Cap particle count by viewport to keep mobile workload bounded
-      const maxParticles = W < 640 ? 500 : W < 1024 ? 600 : Infinity;
-      if (particles.length > maxParticles) {
-        const stride = particles.length / maxParticles;
-        particles = Array.from({ length: maxParticles as number }, (_, i) =>
-          particles[Math.round(i * stride)]
-        );
-      }
     }
 
     // On resize: resample the word boundary at the new viewport size and
