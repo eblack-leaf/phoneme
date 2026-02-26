@@ -1,4 +1,4 @@
-import { onMount, onCleanup, createSignal } from "solid-js";
+import {onMount, onCleanup, createSignal, createEffect} from "solid-js";
 import { A } from "@solidjs/router";
 import { useNavigate, useLocation } from "@solidjs/router";
 
@@ -514,15 +514,14 @@ export default function Landing() {
 
     window.addEventListener("resize", handleResize);
 
-    // Hash-based scroll on load
-    if (window.location.hash === "#use-cases") {
-      setTimeout(() => {
-        thirdRef?.scrollIntoView({ behavior: "instant" });
-      }, 100);
-    }
-
     const navigate = useNavigate();
     const location = useLocation();
+
+    createEffect(() => {
+      if (location.hash === "#use-cases" && thirdRef) {
+        thirdRef.scrollIntoView({ behavior: "auto" });
+      }
+    });
 
     const observer = new IntersectionObserver(
         (entries) => {
@@ -531,10 +530,8 @@ export default function Landing() {
               if (location.hash !== "#use-cases") {
                 navigate("#use-cases", { replace: true });
               }
-            } else {
-              if (location.hash === "#use-cases") {
-                navigate(".", { replace: true });
-              }
+            } else if (location.hash === "#use-cases") {
+              navigate(".", { replace: true });
             }
           }
         },
