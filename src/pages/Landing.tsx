@@ -145,7 +145,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Place particles near text with a scaled buffer zone
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
-  const step = Math.max(2, Math.round(4 * scale));
+  const step = Math.max(3, Math.round(6 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
