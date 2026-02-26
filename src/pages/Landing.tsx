@@ -152,7 +152,8 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Place particles near text with a scaled buffer zone
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
-  const step = Math.max(3, Math.round(6 * scale));
+  const isMobile = w < 640;
+  const step = isMobile ? Math.max(5, Math.round(7 * scale)) : Math.max(3, Math.round(6 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
@@ -185,7 +186,8 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   }
 
   // Halo particles
-  const haloStep = 16;
+  const haloStep = isMobile ? 24 : 16;
+  const haloChance = isMobile ? 0.12 : 0.3;
   for (let y = 0; y < h; y += haloStep) {
     for (let x = 0; x < w; x += haloStep) {
       if (data[(y * w + x) * 4] > 128) continue;
@@ -199,7 +201,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
           }
         }
       }
-      if (nearText && Math.random() < 0.3) points.push({ nx: x / w, ny: y / h });
+      if (nearText && Math.random() < haloChance) points.push({ nx: x / w, ny: y / h });
     }
   }
 
@@ -353,6 +355,15 @@ export default function Landing() {
       for (const p of particles) {
         const norm = (p.ntx - minX) / rangeX;
         p.colorIdx = Math.min(GLYPH_PALETTE.length - 1, Math.floor(norm * GLYPH_PALETTE.length));
+      }
+
+      // Cap particle count by viewport to keep mobile workload bounded
+      const maxParticles = W < 640 ? 280 : W < 1024 ? 500 : Infinity;
+      if (particles.length > maxParticles) {
+        const stride = particles.length / maxParticles;
+        particles = Array.from({ length: maxParticles as number }, (_, i) =>
+          particles[Math.round(i * stride)]
+        );
       }
     }
 
@@ -519,6 +530,13 @@ export default function Landing() {
         setChevronVisible(true);
       }
 
+      // On mobile, stop the loop once everything is fully settled —
+      // the sub-pixel jitter is imperceptible and costs real GPU time.
+      const FULLY_SETTLED = DIAGRAM_DELAY + DIAGRAM_DRAW_DURATION + 400;
+      if (W < 640 && elapsed > FULLY_SETTLED) {
+        return; // no next frame
+      }
+
       animId = requestAnimationFrame(draw);
     }
 
@@ -532,6 +550,9 @@ export default function Landing() {
       } else {
         // Remap particle targets to new word position without restarting
         remapParticles();
+        // Restart rAF in case it stopped (mobile settled state)
+        cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(draw);
       }
     }
 
@@ -589,7 +610,7 @@ export default function Landing() {
           style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
         >
           <span
-            class="text-stone-400 text-xs tracking-[0.2em] uppercase"
+            class="text-amber-400 text-sm tracking-[0.2em] uppercase"
             style='font-family: "JetBrains Mono", monospace;'
           >
             Explore
@@ -603,7 +624,7 @@ export default function Landing() {
             stroke-width="1.5"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="text-stone-400 animate-bounce"
+            class="text-amber-400 animate-bounce"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
@@ -658,7 +679,7 @@ export default function Landing() {
           style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
         >
           <span
-            class="text-stone-400 text-xs tracking-[0.2em] uppercase"
+            class="text-amber-400 text-sm tracking-[0.2em] uppercase"
             style='font-family: "JetBrains Mono", monospace;'
           >
             Use Cases
@@ -672,7 +693,7 @@ export default function Landing() {
             stroke-width="1.5"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="text-stone-400 animate-bounce"
+            class="text-amber-400 animate-bounce"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
