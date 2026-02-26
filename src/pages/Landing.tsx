@@ -1,5 +1,6 @@
 import { onMount, onCleanup, createSignal } from "solid-js";
 import { A } from "@solidjs/router";
+import { useNavigate, useLocation } from "@solidjs/router";
 
 const GLYPHS = [
   "ə", "ʃ", "θ", "ð", "ŋ", "ʒ", "ɪ", "æ", "ʊ", "ɔ",
@@ -152,7 +153,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
       // Skip if this pixel IS text
       if (data[(y * w + x) * 4] > 128) continue;
 
-      // Find closest distance to any text pixel
+      // Find the closest distance to any text pixel
       let closestDist = reach + 1;
       const searchR = reach;
       outer:
@@ -513,26 +514,33 @@ export default function Landing() {
 
     window.addEventListener("resize", handleResize);
 
-    // Hash-based scroll: if URL has #use-cases, scroll to that section
+    // Hash-based scroll on load
     if (window.location.hash === "#use-cases") {
       setTimeout(() => {
         thirdRef?.scrollIntoView({ behavior: "instant" });
       }, 100);
     }
 
-    // Keep URL hash in sync with visible section so browser back works
+    const navigate = useNavigate();
+    const location = useLocation();
+
     const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            history.replaceState(null, "", "/#use-cases");
-          } else if (window.location.hash === "#use-cases") {
-            history.replaceState(null, "", "/");
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              if (location.hash !== "#use-cases") {
+                navigate("#use-cases", { replace: true });
+              }
+            } else {
+              if (location.hash === "#use-cases") {
+                navigate(".", { replace: true });
+              }
+            }
           }
-        }
-      },
-      { threshold: 0.3 },
+        },
+        { threshold: 0.3 }
     );
+
     if (thirdRef) observer.observe(thirdRef);
 
     onCleanup(() => {

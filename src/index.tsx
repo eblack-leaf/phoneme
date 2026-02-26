@@ -14,7 +14,7 @@ const About = lazy(() => import("./pages/About"));
 
 render(
   () => (
-    <Router root={App}>
+    <Router root={App} base={"/phoneme"}>
       <Route path="/" component={Landing} />
       <Route path="/demo" component={Demo} />
       <Route path="/work/llvm" component={WorkLLVM} />
