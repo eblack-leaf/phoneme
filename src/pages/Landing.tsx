@@ -145,7 +145,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   // Place particles near text with a scaled buffer zone
   // Buffer and reach scale with font size so interiors work at small viewports
   const scale = fontSize / 140;
-  const step = Math.max(3, Math.round(6 * scale));
+  const step = Math.max(4, Math.round(8 * scale));
   const buffer = 2;
   const reach = Math.max(8, Math.round(16 * scale));
   for (let y = 0; y < h; y += step) {
@@ -157,8 +157,8 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
       let closestDist = reach + 1;
       const searchR = reach;
       outer:
-      for (let dy = -searchR; dy <= searchR; dy += 3) {
-        for (let dx = -searchR; dx <= searchR; dx += 3) {
+      for (let dy = -searchR; dy <= searchR; dy += 6) {
+        for (let dx = -searchR; dx <= searchR; dx += 6) {
           const nx2 = x + dx, ny2 = y + dy;
           if (nx2 >= 0 && nx2 < w && ny2 >= 0 && ny2 < h) {
             if (data[(ny2 * w + nx2) * 4] > 128) {
@@ -178,11 +178,11 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
   }
 
   // Halo particles
-  const haloStep = 14;
+  const haloStep = 20;
   for (let y = 0; y < h; y += haloStep) {
     for (let x = 0; x < w; x += haloStep) {
       if (data[(y * w + x) * 4] > 128) continue;
-      const radius = 30;
+      const radius = 20;
       let nearText = false;
       for (let dy = -radius; dy <= radius && !nearText; dy += 10) {
         for (let dx = -radius; dx <= radius && !nearText; dx += 10) {
