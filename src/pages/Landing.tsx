@@ -216,6 +216,15 @@ export default function Landing() {
     thirdRef?.scrollIntoView({ behavior: "smooth" });
   }
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  createEffect(() => {
+    if (location.hash === "#use-cases" && thirdRef) {
+      thirdRef.scrollIntoView({ behavior: "auto" });
+    }
+  });
+
   onMount(() => {
     const canvas = canvasRef!;
     const ctx = canvas.getContext("2d")!;
@@ -513,15 +522,6 @@ export default function Landing() {
     animId = requestAnimationFrame(draw);
 
     window.addEventListener("resize", handleResize);
-
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    createEffect(() => {
-      if (location.hash === "#use-cases" && thirdRef) {
-        thirdRef.scrollIntoView({ behavior: "auto" });
-      }
-    });
 
     const observer = new IntersectionObserver(
         (entries) => {
