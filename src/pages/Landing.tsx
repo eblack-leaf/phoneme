@@ -358,7 +358,7 @@ export default function Landing() {
       }
 
       // Cap particle count by viewport to keep mobile workload bounded
-      const maxParticles = W < 640 ? 420 : W < 1024 ? 500 : Infinity;
+      const maxParticles = W < 640 ? 500 : W < 1024 ? 600 : Infinity;
       if (particles.length > maxParticles) {
         const stride = particles.length / maxParticles;
         particles = Array.from({ length: maxParticles as number }, (_, i) =>
