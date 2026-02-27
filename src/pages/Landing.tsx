@@ -615,25 +615,25 @@ export default function Landing() {
         class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-20"
         style="scroll-snap-align: start;"
       >
-        <div class="max-w-2xl w-full" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
           {/* Dictionary entry */}
           <div class="mb-16">
-            <h2 class="text-orange-400 text-3xl sm:text-4xl font-bold tracking-tight mb-1">
+            <h2 class="text-orange-400 text-4xl sm:text-5xl font-bold tracking-tight mb-1">
               phoneme
             </h2>
-            <p class="text-orange-700 text-sm mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
+            <p class="text-orange-700 text-base mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
             <div class="border-l-2 border-orange-800 pl-4">
-              <p class="text-stone-400 text-sm leading-relaxed">
+              <p class="text-stone-400 text-base leading-relaxed">
                 The smallest unit of sound in a language that distinguishes one word from another.
               </p>
-              <p class="text-stone-600 text-xs mt-2 italic">
+              <p class="text-stone-600 text-sm mt-2 italic">
                 e.g. the /p/ in "pat" vs the /b/ in "bat"
               </p>
             </div>
           </div>
 
           {/* Project description */}
-          <div class="space-y-5 text-stone-400 text-sm leading-relaxed">
+          <div class="space-y-5 text-stone-400 text-base leading-relaxed">
             <p>
               A phoneme is the irreducible unit of language. We apply the same principle to
               models: find the minimal architecture that solves the task, then train it
@@ -671,18 +671,18 @@ export default function Landing() {
         class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-5xl flex flex-col lg:flex-row items-center gap-12" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
             <svg viewBox="0 0 500 270" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Input features */}
-              {[90,120,150,180].map(y => <circle cx="40" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <text x="40" y="210" text-anchor="middle" fill="#78716c" font-size="11" font-family="JetBrains Mono, monospace">IR features</text>
+              {[90,120,150,180].map(y => <circle cx="40" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <text x="40" y="212" text-anchor="middle" fill="#78716c" font-size="14" font-family="JetBrains Mono, monospace">IR features</text>
               {/* → LSTM */}
-              {[90,120,150,180].map(y => <line x1="48" y1={y} x2="138" y2="135" stroke="#44403c" stroke-width="0.9" />)}
+              {[90,120,150,180].map(y => <line x1="49" y1={y} x2="138" y2="135" stroke="#44403c" stroke-width="1" />)}
               {/* LSTM cell */}
-              <rect x="140" y="98" width="100" height="68" rx="6" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="190" y="130" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">LSTM</text>
-              <text x="190" y="150" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">hidden: 64</text>
+              <rect x="140" y="98" width="100" height="68" rx="6" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="190" y="130" text-anchor="middle" fill="#a8a29e" font-size="19" font-family="JetBrains Mono, monospace">LSTM</text>
+              <text x="190" y="152" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">hidden: 64</text>
               {/* Recurrence */}
               <path d="M240 118 Q265 118 265 90 Q265 62 190 62 Q140 62 140 108" fill="none" stroke="#78716c" stroke-width="1" stroke-dasharray="4 3" />
               <polygon points="140,106 136,96 146,96" fill="#78716c" />
@@ -690,37 +690,37 @@ export default function Landing() {
               <line x1="240" y1="115" x2="303" y2="90" stroke="#44403c" stroke-width="1" />
               <line x1="240" y1="151" x2="303" y2="175" stroke="#44403c" stroke-width="1" />
               {/* Policy head */}
-              <circle cx="318" cy="87" r="16" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="318" y="93" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">π</text>
-              <text x="318" y="62" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">policy</text>
+              <circle cx="318" cy="87" r="17" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="318" y="93" text-anchor="middle" fill="#a8a29e" font-size="19" font-family="JetBrains Mono, monospace">π</text>
+              <text x="318" y="62" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">policy</text>
               {/* Value head */}
-              <circle cx="318" cy="178" r="16" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="318" y="184" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">V</text>
-              <text x="318" y="213" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">value</text>
+              <circle cx="318" cy="178" r="17" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="318" y="185" text-anchor="middle" fill="#a8a29e" font-size="19" font-family="JetBrains Mono, monospace">V</text>
+              <text x="318" y="213" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">value</text>
               {/* → pass selection */}
-              <line x1="334" y1="87"  x2="398" y2="118" stroke="#44403c" stroke-width="1" />
-              <line x1="334" y1="178" x2="398" y2="148" stroke="#44403c" stroke-width="1" />
-              <rect x="398" y="112" width="90" height="44" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="443" y="131" text-anchor="middle" fill="#a8a29e" font-size="12" font-family="JetBrains Mono, monospace">pass</text>
-              <text x="443" y="149" text-anchor="middle" fill="#a8a29e" font-size="12" font-family="JetBrains Mono, monospace">select</text>
+              <line x1="335" y1="87"  x2="398" y2="118" stroke="#44403c" stroke-width="1" />
+              <line x1="335" y1="178" x2="398" y2="148" stroke="#44403c" stroke-width="1" />
+              <rect x="398" y="112" width="90" height="44" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="443" y="131" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">pass</text>
+              <text x="443" y="150" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">select</text>
               {/* Reward feedback */}
               <path d="M443 156 Q443 242 190 242 Q140 242 140 170" fill="none" stroke="#78716c" stroke-width="1" stroke-dasharray="4 3" />
               <polygon points="140,168 136,178 146,178" fill="#78716c" />
-              <text x="310" y="258" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">reward: Δspeedup vs -O3</text>
+              <text x="310" y="259" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">reward: Δspeedup vs -O3</text>
             </svg>
           </div>
-          <div class="w-full lg:w-1/2 space-y-5">
-            <p class="text-orange-800 text-xs tracking-widest">01 / USE CASES</p>
-            <h2 class="text-orange-300 text-2xl sm:text-3xl font-bold tracking-tight">LLVM Pass Optimization</h2>
-            <p class="text-stone-400 text-sm leading-relaxed">
+          <div class="w-full lg:w-1/2 space-y-6">
+            <p class="text-orange-800 text-sm tracking-widest">01 / USE CASES</p>
+            <h2 class="text-orange-300 text-3xl sm:text-4xl font-bold tracking-tight">LLVM Pass Optimization</h2>
+            <p class="text-stone-400 text-base leading-relaxed">
               LSTM + PPO online learning. The model observes IR features extracted per
               function and learns pass orderings that outperform <span class="text-stone-300">-O3</span>.
             </p>
-            <p class="text-stone-500 text-sm leading-relaxed">
+            <p class="text-stone-500 text-base leading-relaxed">
               Reward signal: measured runtime speedup. No labeled data — the compiler
               and hardware are the oracle. Trains entirely on-device.
             </p>
-            <A href="/work/llvm" class="inline-flex items-center gap-1.5 text-orange-600 text-sm hover:text-orange-400 transition-colors">
+            <A href="/work/llvm" class="inline-flex items-center gap-1.5 text-orange-600 text-base hover:text-orange-400 transition-colors">
               View project
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </A>
@@ -744,56 +744,56 @@ export default function Landing() {
         class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-5xl flex flex-col lg:flex-row-reverse items-center gap-12" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row-reverse items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
             <svg viewBox="0 0 500 230" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Embedding */}
-              <rect x="10" y="72" width="58" height="86" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="39" y="112" text-anchor="middle" fill="#a8a29e" font-size="11" font-family="JetBrains Mono, monospace">embed</text>
-              <text x="39" y="128" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">dim 64</text>
-              <text x="39" y="54" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">tokens</text>
+              <rect x="10" y="72" width="58" height="86" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="39" y="112" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">embed</text>
+              <text x="39" y="129" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">dim 64</text>
+              <text x="39" y="54" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">tokens</text>
               <line x1="68" y1="115" x2="90" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Conv1D ×2 */}
-              <rect x="90" y="58" width="62" height="114" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="121" y="110" text-anchor="middle" fill="#a8a29e" font-size="11" font-family="JetBrains Mono, monospace">conv1d</text>
-              <text x="121" y="126" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">k=3 ×128</text>
-              <text x="121" y="40" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">ReLU</text>
+              <rect x="90" y="58" width="62" height="114" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="121" y="110" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">conv1d</text>
+              <text x="121" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=3 ×128</text>
+              <text x="121" y="40" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">ReLU</text>
               <line x1="152" y1="115" x2="174" y2="115" stroke="#44403c" stroke-width="1" />
-              <rect x="174" y="70" width="62" height="90" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="205" y="110" text-anchor="middle" fill="#a8a29e" font-size="11" font-family="JetBrains Mono, monospace">conv1d</text>
-              <text x="205" y="126" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">k=5 ×64</text>
-              <text x="205" y="52" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">ReLU</text>
+              <rect x="174" y="70" width="62" height="90" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="205" y="110" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">conv1d</text>
+              <text x="205" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=5 ×64</text>
+              <text x="205" y="52" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">ReLU</text>
               <line x1="236" y1="115" x2="258" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Global max pool */}
-              <rect x="258" y="90" width="66" height="50" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="291" y="112" text-anchor="middle" fill="#a8a29e" font-size="10" font-family="JetBrains Mono, monospace">global</text>
-              <text x="291" y="128" text-anchor="middle" fill="#a8a29e" font-size="10" font-family="JetBrains Mono, monospace">max pool</text>
+              <rect x="258" y="90" width="66" height="50" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="291" y="112" text-anchor="middle" fill="#a8a29e" font-size="13" font-family="JetBrains Mono, monospace">global</text>
+              <text x="291" y="128" text-anchor="middle" fill="#a8a29e" font-size="13" font-family="JetBrains Mono, monospace">max pool</text>
               <line x1="324" y1="115" x2="346" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Dense */}
-              <rect x="346" y="96" width="54" height="38" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.2" />
-              <text x="373" y="120" text-anchor="middle" fill="#a8a29e" font-size="11" font-family="JetBrains Mono, monospace">dense</text>
+              <rect x="346" y="96" width="54" height="38" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
+              <text x="373" y="121" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">dense</text>
               <line x1="400" y1="115" x2="422" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Output classes */}
-              {[88,115,142].map(y => <circle cx="436" cy={y} r="10" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <line x1="422" y1="115" x2="426" y2="88"  stroke="#44403c" stroke-width="1" />
-              <line x1="422" y1="115" x2="426" y2="142" stroke="#44403c" stroke-width="1" />
-              <text x="456" y="92"  fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">spam</text>
-              <text x="456" y="119" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">intent</text>
-              <text x="456" y="146" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">other</text>
+              {[88,115,142].map(y => <circle cx="436" cy={y} r="11" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <line x1="422" y1="115" x2="425" y2="88"  stroke="#44403c" stroke-width="1" />
+              <line x1="422" y1="115" x2="425" y2="142" stroke="#44403c" stroke-width="1" />
+              <text x="457" y="92"  fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">spam</text>
+              <text x="457" y="119" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">intent</text>
+              <text x="457" y="146" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">other</text>
             </svg>
           </div>
-          <div class="w-full lg:w-1/2 space-y-5">
-            <p class="text-orange-800 text-xs tracking-widest">02 / USE CASES</p>
-            <h2 class="text-orange-300 text-2xl sm:text-3xl font-bold tracking-tight">On-Device Text Classification</h2>
-            <p class="text-stone-400 text-sm leading-relaxed">
+          <div class="w-full lg:w-1/2 space-y-6">
+            <p class="text-orange-800 text-sm tracking-widest">02 / USE CASES</p>
+            <h2 class="text-orange-300 text-3xl sm:text-4xl font-bold tracking-tight">On-Device Text Classification</h2>
+            <p class="text-stone-400 text-base leading-relaxed">
               Small CNN for local intent detection and spam filtering.
               Runs entirely on-device — no data leaves, no cloud inference.
             </p>
-            <p class="text-stone-500 text-sm leading-relaxed">
+            <p class="text-stone-500 text-base leading-relaxed">
               Fine-tune on user-specific patterns without exfiltrating training data.
               The model lives on the device; so does everything it learns.
             </p>
-            <A href="/work/text-classification" class="inline-flex items-center gap-1.5 text-orange-600 text-sm hover:text-orange-400 transition-colors">
+            <A href="/work/text-classification" class="inline-flex items-center gap-1.5 text-orange-600 text-base hover:text-orange-400 transition-colors">
               View project
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </A>
@@ -817,12 +817,12 @@ export default function Landing() {
         class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-5xl flex flex-col lg:flex-row items-center gap-12" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
             <svg viewBox="0 0 500 250" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Input sensors */}
-              {[50,82,114,146,178].map(y => <circle cx="28" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <text x="28" y="206" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">sensor x</text>
+              {[50,82,114,146,178].map(y => <circle cx="28" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <text x="28" y="207" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">sensor x</text>
               {/* → encoder layer 1 */}
               {[50,82,114,146,178].map(y => (
                 <g>
@@ -831,7 +831,7 @@ export default function Landing() {
                   <line x1="36" y1={y} x2="96" y2="132" stroke="#44403c" stroke-width="0.8" />
                 </g>
               ))}
-              {[96,114,132].map(y => <circle cx="104" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
+              {[96,114,132].map(y => <circle cx="104" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
               {/* → encoder layer 2 */}
               {[96,114,132].map(y => (
                 <g>
@@ -839,18 +839,18 @@ export default function Landing() {
                   <line x1="112" y1={y} x2="162" y2="122" stroke="#44403c" stroke-width="0.8" />
                 </g>
               ))}
-              {[106,122].map(y => <circle cx="170" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <text x="114" y="172" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">encoder</text>
+              {[106,122].map(y => <circle cx="170" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <text x="114" y="172" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">encoder</text>
               {/* → bottleneck */}
               <line x1="178" y1="106" x2="224" y2="114" stroke="#44403c" stroke-width="0.8" />
               <line x1="178" y1="122" x2="224" y2="114" stroke="#44403c" stroke-width="0.8" />
-              <circle cx="236" cy="114" r="14" fill="none" stroke="#f97316" stroke-width="1.8" />
-              <text x="236" y="119" text-anchor="middle" fill="#f97316" font-size="11" font-family="JetBrains Mono, monospace">z</text>
-              <text x="236" y="90" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">latent</text>
+              <circle cx="236" cy="114" r="15" fill="none" stroke="#f97316" stroke-width="2" />
+              <text x="236" y="120" text-anchor="middle" fill="#f97316" font-size="14" font-family="JetBrains Mono, monospace">z</text>
+              <text x="236" y="90" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">latent</text>
               {/* decoder layer 1 */}
               <line x1="250" y1="107" x2="292" y2="106" stroke="#44403c" stroke-width="0.8" />
               <line x1="250" y1="121" x2="292" y2="122" stroke="#44403c" stroke-width="0.8" />
-              {[106,122].map(y => <circle cx="300" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
+              {[106,122].map(y => <circle cx="300" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
               {/* decoder layer 2 */}
               {[106,122].map(y => (
                 <g>
@@ -859,8 +859,8 @@ export default function Landing() {
                   <line x1="308" y1={y} x2="356" y2="132" stroke="#44403c" stroke-width="0.8" />
                 </g>
               ))}
-              {[96,114,132].map(y => <circle cx="364" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <text x="334" y="172" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">decoder</text>
+              {[96,114,132].map(y => <circle cx="364" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <text x="334" y="172" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">decoder</text>
               {/* → reconstruction */}
               {[96,114,132].map(y => (
                 <g>
@@ -871,23 +871,23 @@ export default function Landing() {
                   <line x1="372" y1={y} x2="424" y2="178" stroke="#44403c" stroke-width="0.7" />
                 </g>
               ))}
-              {[50,82,114,146,178].map(y => <circle cx="432" cy={y} r="8" fill="none" stroke="#a8a29e" stroke-width="1.2" />)}
-              <text x="432" y="206" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">x̂ recon.</text>
-              <text x="250" y="232" text-anchor="middle" fill="#78716c" font-size="10" font-family="JetBrains Mono, monospace">anomaly score = ‖x − x̂‖²</text>
+              {[50,82,114,146,178].map(y => <circle cx="432" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
+              <text x="432" y="207" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">x̂ recon.</text>
+              <text x="250" y="233" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">anomaly score = ‖x − x̂‖²</text>
             </svg>
           </div>
-          <div class="w-full lg:w-1/2 space-y-5">
-            <p class="text-orange-800 text-xs tracking-widest">03 / USE CASES</p>
-            <h2 class="text-orange-300 text-2xl sm:text-3xl font-bold tracking-tight">Sensor Anomaly Detection</h2>
-            <p class="text-stone-400 text-sm leading-relaxed">
+          <div class="w-full lg:w-1/2 space-y-6">
+            <p class="text-orange-800 text-sm tracking-widest">03 / USE CASES</p>
+            <h2 class="text-orange-300 text-3xl sm:text-4xl font-bold tracking-tight">Sensor Anomaly Detection</h2>
+            <p class="text-stone-400 text-base leading-relaxed">
               Autoencoder trained on-device for edge IoT. Learns normal sensor patterns
               during a calibration window, then flags deviations in real-time.
             </p>
-            <p class="text-stone-500 text-sm leading-relaxed">
+            <p class="text-stone-500 text-base leading-relaxed">
               No labeled data required — reconstruction error is the anomaly signal.
               Works on any time-series sensor: vibration, temperature, current draw.
             </p>
-            <A href="/work/anomaly-detection" class="inline-flex items-center gap-1.5 text-orange-600 text-sm hover:text-orange-400 transition-colors">
+            <A href="/work/anomaly-detection" class="inline-flex items-center gap-1.5 text-orange-600 text-base hover:text-orange-400 transition-colors">
               View project
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </A>
@@ -911,22 +911,22 @@ export default function Landing() {
         class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-20"
         style="scroll-snap-align: start;"
       >
-        <div class="max-w-2xl w-full" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
           <div class="mb-16">
-            <p class="text-orange-800 text-xs tracking-widest mb-4">CONSULTING</p>
-            <h2 class="text-orange-400 text-3xl sm:text-4xl font-bold tracking-tight mb-1">
+            <p class="text-orange-800 text-sm tracking-widest mb-4">CONSULTING</p>
+            <h2 class="text-orange-400 text-4xl sm:text-5xl font-bold tracking-tight mb-1">
               Work with me.
             </h2>
           </div>
           <div class="border-l-2 border-orange-800 pl-4 mb-12">
-            <p class="text-stone-400 text-sm leading-relaxed">
+            <p class="text-stone-400 text-base leading-relaxed">
               One task. One model. One device.
             </p>
-            <p class="text-stone-600 text-xs mt-2 italic">
+            <p class="text-stone-600 text-sm mt-2 italic">
               If it runs on silicon, it can run a model.
             </p>
           </div>
-          <div class="space-y-5 text-stone-400 text-sm leading-relaxed mb-12">
+          <div class="space-y-5 text-stone-400 text-base leading-relaxed mb-12">
             <p>
               Have a use case, a hardware target, or a dataset you can't send to the
               cloud? I'll help you design and train the minimal model that solves it —
@@ -939,7 +939,7 @@ export default function Landing() {
           </div>
           <a
             href="mailto:hello@phoneme.dev"
-            class="inline-flex items-center gap-2 text-orange-500 hover:text-orange-300 transition-colors text-sm tracking-wide"
+            class="inline-flex items-center gap-2 text-orange-500 hover:text-orange-300 transition-colors text-base tracking-wide"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2" />
