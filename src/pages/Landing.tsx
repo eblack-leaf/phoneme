@@ -286,11 +286,11 @@ export default function Landing() {
       // radius and push the opaque band out further to cover it cleanly.
       const scaleY = 0.5;
       const mobile = W < 640;
-      const vr = W * (mobile ? 0.80 : 0.30);
+      const vr = W * (mobile ? 0.50 : 0.30);
       vignetteGrad = ctx.createRadialGradient(W / 2, H / 2 / scaleY, 0, W / 2, H / 2 / scaleY, vr);
       vignetteGrad.addColorStop(0,                   "rgba(9,9,11,1)");
-      vignetteGrad.addColorStop(mobile ? 0.65 : 0.40, "rgba(9,9,11,1)");
-      vignetteGrad.addColorStop(mobile ? 0.92 : 0.85, "rgba(9,9,11,0)");
+      vignetteGrad.addColorStop(mobile ? 0.75 : 0.40, "rgba(9,9,11,1)");
+      vignetteGrad.addColorStop(mobile ? 0.95 : 0.85, "rgba(9,9,11,0)");
       vignetteGrad.addColorStop(1,                   "rgba(9,9,11,0)");
     }
 
@@ -681,7 +681,7 @@ export default function Landing() {
     >
       {/* Hero section */}
       <div ref={heroRef} class="relative h-dvh w-full shrink-0" style="scroll-snap-align: start;">
-        <canvas ref={canvasRef} class="absolute inset-0" />
+        <canvas ref={canvasRef} class="absolute inset-0" style="background-color: #09090b;" />
 
         {/* Chevron */}
         <button
