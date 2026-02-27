@@ -230,6 +230,7 @@ export default function Landing() {
     let startTime = 0;
     let built = false;
     let vignetteGrad: CanvasGradient | null = null;
+    let lastDrawTime = 0;
     const DURATION = 3000;
 
     // Glyph atlas: pre-rendered bitmaps keyed by "glyph|size|colorIdx"
@@ -523,6 +524,15 @@ export default function Landing() {
     }
 
     function draw(now: number) {
+      // On mobile throttle to ~30fps after the intro animation settles.
+      // Still queues the next frame so elapsed time stays accurate.
+      const settled = now - startTime > DURATION + 800;
+      if (W < 640 && settled && now - lastDrawTime < 32) {
+        animId = requestAnimationFrame(draw);
+        return;
+      }
+      lastDrawTime = now;
+
       const elapsed = now - startTime;
       ctx.clearRect(0, 0, W, H);
 
