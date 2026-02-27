@@ -61,6 +61,7 @@ interface Particle {
   alpha: number;
   delay: number;
   colorIdx: number;
+  atlasKey: string;
 }
 
 // Orange-to-yellow gradient palette for particles (left → right)
@@ -227,6 +228,7 @@ export default function Landing() {
     let particles: Particle[] = [];
     let startTime = 0;
     let built = false;
+    let vignetteGrad: CanvasGradient | null = null;
     const DURATION = 3000;
 
     // Glyph atlas: pre-rendered bitmaps keyed by "glyph|size|colorIdx"
@@ -262,7 +264,7 @@ export default function Landing() {
 
     const diagram = buildDiagram();
     const DIAGRAM_DELAY = 3400;
-    const DIAGRAM_DRAW_DURATION = 2500;
+    const DIAGRAM_DRAW_DURATION = 3500;
 
     function sizeCanvas() {
       dpr = window.devicePixelRatio || 1;
@@ -273,6 +275,14 @@ export default function Landing() {
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Rebuild cached vignette gradient for new dimensions
+      const scaleY = 0.5;
+      const vr = W * 0.30;
+      vignetteGrad = ctx.createRadialGradient(W / 2, H / 2 / scaleY, 0, W / 2, H / 2 / scaleY, vr);
+      vignetteGrad.addColorStop(0,    "rgba(9,9,11,1)");
+      vignetteGrad.addColorStop(0.40, "rgba(9,9,11,1)");
+      vignetteGrad.addColorStop(0.85, "rgba(9,9,11,0)");
+      vignetteGrad.addColorStop(1,    "rgba(9,9,11,0)");
     }
 
     function buildParticles() {
@@ -332,6 +342,7 @@ export default function Landing() {
           alpha: 0.45 + Math.random() * 0.55,
           delay: bandT * 400 + Math.random() * 200,
           colorIdx: 0, // assigned after all particles built
+          atlasKey: "",  // assigned after colorIdx is set
         };
       });
 
@@ -346,6 +357,7 @@ export default function Landing() {
       for (const p of particles) {
         const norm = (p.ntx - minX) / rangeX;
         p.colorIdx = Math.min(GLYPH_PALETTE.length - 1, Math.floor(norm * GLYPH_PALETTE.length));
+        p.atlasKey = `${p.glyph}|${p.size}|${p.colorIdx}`;
       }
 
     }
@@ -514,15 +526,9 @@ export default function Landing() {
       // Elliptical vignette: fully opaque center, feathers to transparent.
       // scaleY < 1 squishes the circle into a short wide ellipse.
       const scaleY = 0.5;
-      const vr = W * 0.30;
       ctx.save();
       ctx.scale(1, scaleY);
-      const vignette = ctx.createRadialGradient(W / 2, H / 2 / scaleY, 0, W / 2, H / 2 / scaleY, vr);
-      vignette.addColorStop(0,    "rgba(9,9,11,1)");
-      vignette.addColorStop(0.40, "rgba(9,9,11,1)");
-      vignette.addColorStop(0.85, "rgba(9,9,11,0)");
-      vignette.addColorStop(1,    "rgba(9,9,11,0)");
-      ctx.fillStyle = vignette;
+      ctx.fillStyle = vignetteGrad!;
       ctx.fillRect(0, 0, W, H / scaleY);
       ctx.restore();
 
@@ -543,7 +549,7 @@ export default function Landing() {
           drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 0.5;
         }
 
-        const atlas = glyphAtlas.get(`${p.glyph}|${p.size}|${p.colorIdx}`);
+        const atlas = glyphAtlas.get(p.atlasKey);
         if (atlas) {
           ctx.globalAlpha = p.alpha * fadeIn;
           ctx.drawImage(atlas.canvas, 0, 0, atlas.canvas.width, atlas.canvas.height,
