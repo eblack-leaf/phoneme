@@ -524,12 +524,14 @@ export default function Landing() {
     }
 
     function draw(now: number) {
-      // On mobile throttle to ~30fps after the intro animation settles.
+      // On mobile: 30fps during intro, 20fps once settled.
       // Still queues the next frame so elapsed time stays accurate.
-      const settled = now - startTime > DURATION + 800;
-      if (W < 640 && settled && now - lastDrawTime < 32) {
-        animId = requestAnimationFrame(draw);
-        return;
+      if (W < 640) {
+        const settled = now - startTime > DURATION + 800;
+        if (now - lastDrawTime < (settled ? 48 : 32)) {
+          animId = requestAnimationFrame(draw);
+          return;
+        }
       }
       lastDrawTime = now;
 
