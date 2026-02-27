@@ -612,49 +612,51 @@ export default function Landing() {
       {/* Explore section */}
       <div
         ref={secondRef}
-        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-20"
+        class="min-h-screen w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
-        <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
-          {/* Dictionary entry */}
-          <div class="mb-16">
-            <h2 class="text-orange-400 text-4xl sm:text-5xl font-bold tracking-tight mb-1">
-              phoneme
-            </h2>
-            <p class="text-orange-700 text-base mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
-            <div class="border-l-2 border-orange-800 pl-4">
-              <p class="text-stone-400 text-base leading-relaxed">
-                The smallest unit of sound in a language that distinguishes one word from another.
+        <div class="flex-1 flex items-center justify-center px-6 py-8">
+          <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
+            {/* Dictionary entry */}
+            <div class="mb-8 lg:mb-16">
+              <h2 class="text-orange-400 text-4xl sm:text-5xl font-bold tracking-tight mb-1">
+                phoneme
+              </h2>
+              <p class="text-orange-700 text-base mb-4">/ˈfoʊ.niːm/&ensp;<span class="italic">noun</span></p>
+              <div class="border-l-2 border-orange-800 pl-4">
+                <p class="text-stone-400 text-base leading-relaxed">
+                  The smallest unit of sound in a language that distinguishes one word from another.
+                </p>
+                <p class="text-stone-600 text-sm mt-2 italic">
+                  e.g. the /p/ in "pat" vs the /b/ in "bat"
+                </p>
+              </div>
+            </div>
+
+            {/* Project description */}
+            <div class="space-y-4 lg:space-y-5 text-stone-400 text-base leading-relaxed">
+              <p>
+                A phoneme is the irreducible unit of language. We apply the same principle to
+                models: find the minimal architecture that solves the task, then train it
+                on-device. No surplus parameters. No cloud dependency.
               </p>
-              <p class="text-stone-600 text-sm mt-2 italic">
-                e.g. the /p/ in "pat" vs the /b/ in "bat"
+              <p>
+                Data never leaves the device. Training runs locally — on the hardware you
+                already carry. No telemetry, no third-party inference, no round-trips to
+                someone else's cluster.
+              </p>
+              <p>
+                One task, one model, one device. The minimum viable intelligence for the job.
               </p>
             </div>
-          </div>
-
-          {/* Project description */}
-          <div class="space-y-5 text-stone-400 text-base leading-relaxed">
-            <p>
-              A phoneme is the irreducible unit of language. We apply the same principle to
-              models: find the minimal architecture that solves the task, then train it
-              on-device. No surplus parameters. No cloud dependency.
-            </p>
-            <p>
-              Data never leaves the device. Training runs locally — on the hardware you
-              already carry. No telemetry, no third-party inference, no round-trips to
-              someone else's cluster.
-            </p>
-            <p>
-              One task, one model, one device. The minimum viable intelligence for the job.
-            </p>
           </div>
         </div>
 
         {/* Chevron → LLVM */}
         <button
           onClick={scrollToLLVM}
-          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
+          class="self-center flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          style="padding-bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));"
         >
           <span class="text-amber-400 text-sm tracking-[0.2em] uppercase" style='font-family: "JetBrains Mono", monospace;'>
             Use Cases
@@ -668,12 +670,13 @@ export default function Landing() {
       {/* ── LLVM Pass Optimization ── */}
       <div
         ref={llvmRef}
-        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
+        class="min-h-screen w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
-            <svg viewBox="0 0 500 270" class="w-full" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="-12 0 512 270" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Input features */}
               {[90,120,150,180].map(y => <circle cx="40" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
               <text x="40" y="212" text-anchor="middle" fill="#78716c" font-size="14" font-family="JetBrains Mono, monospace">IR features</text>
@@ -726,10 +729,11 @@ export default function Landing() {
             </A>
           </div>
         </div>
+        </div>
         <button
           onClick={scrollToTextClass}
-          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
+          class="self-center flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          style="padding-bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));"
         >
           <span class="text-amber-400 text-sm tracking-[0.2em] uppercase" style='font-family: "JetBrains Mono", monospace;'>Text Classification</span>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 animate-bounce">
@@ -741,12 +745,13 @@ export default function Landing() {
       {/* ── On-Device Text Classification ── */}
       <div
         ref={textClassRef}
-        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
+        class="min-h-screen w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-7xl flex flex-col lg:flex-row-reverse items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row-reverse items-center gap-8 lg:gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
-            <svg viewBox="0 0 500 230" class="w-full" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 515 230" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Embedding */}
               <rect x="10" y="72" width="58" height="86" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
               <text x="39" y="112" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">embed</text>
@@ -756,12 +761,12 @@ export default function Landing() {
               {/* Conv1D ×2 */}
               <rect x="90" y="58" width="62" height="114" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
               <text x="121" y="110" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">conv1d</text>
-              <text x="121" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=3 ×128</text>
+              <text x="121" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=3×128</text>
               <text x="121" y="40" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">ReLU</text>
               <line x1="152" y1="115" x2="174" y2="115" stroke="#44403c" stroke-width="1" />
               <rect x="174" y="70" width="62" height="90" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
               <text x="205" y="110" text-anchor="middle" fill="#a8a29e" font-size="14" font-family="JetBrains Mono, monospace">conv1d</text>
-              <text x="205" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=5 ×64</text>
+              <text x="205" y="127" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">k=5×64</text>
               <text x="205" y="52" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">ReLU</text>
               <line x1="236" y1="115" x2="258" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Global max pool */}
@@ -799,10 +804,11 @@ export default function Landing() {
             </A>
           </div>
         </div>
+        </div>
         <button
           onClick={scrollToAnomaly}
-          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
+          class="self-center flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          style="padding-bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));"
         >
           <span class="text-amber-400 text-sm tracking-[0.2em] uppercase" style='font-family: "JetBrains Mono", monospace;'>Anomaly Detection</span>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 animate-bounce">
@@ -814,10 +820,11 @@ export default function Landing() {
       {/* ── Sensor Anomaly Detection ── */}
       <div
         ref={anomalyRef}
-        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-24"
+        class="min-h-screen w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
-        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-16" style='font-family: "JetBrains Mono", monospace;'>
+        <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
+        <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
             <svg viewBox="0 0 500 250" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Input sensors */}
@@ -893,10 +900,11 @@ export default function Landing() {
             </A>
           </div>
         </div>
+        </div>
         <button
           onClick={scrollToContact}
-          class="absolute bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-          style="z-index: 10; padding-bottom: env(safe-area-inset-bottom, 0px);"
+          class="self-center flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+          style="padding-bottom: max(2.5rem, calc(1rem + env(safe-area-inset-bottom, 0px)));"
         >
           <span class="text-amber-400 text-sm tracking-[0.2em] uppercase" style='font-family: "JetBrains Mono", monospace;'>Work With Me</span>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400 animate-bounce">
@@ -908,7 +916,7 @@ export default function Landing() {
       {/* ── Consulting / Contact ── */}
       <div
         ref={contactRef}
-        class="relative min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-20"
+        class="min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-12 lg:py-20"
         style="scroll-snap-align: start;"
       >
         <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
