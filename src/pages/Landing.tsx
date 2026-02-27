@@ -281,14 +281,17 @@ export default function Landing() {
       canvas.style.width = W + "px";
       canvas.style.height = H + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Rebuild cached vignette gradient for new dimensions
+      // Rebuild cached vignette gradient for new dimensions.
+      // On mobile the text spans nearly the full viewport width, so use a wider
+      // radius and push the opaque band out further to cover it cleanly.
       const scaleY = 0.5;
-      const vr = W * 0.30;
+      const mobile = W < 640;
+      const vr = W * (mobile ? 0.80 : 0.30);
       vignetteGrad = ctx.createRadialGradient(W / 2, H / 2 / scaleY, 0, W / 2, H / 2 / scaleY, vr);
-      vignetteGrad.addColorStop(0,    "rgba(9,9,11,1)");
-      vignetteGrad.addColorStop(0.40, "rgba(9,9,11,1)");
-      vignetteGrad.addColorStop(0.85, "rgba(9,9,11,0)");
-      vignetteGrad.addColorStop(1,    "rgba(9,9,11,0)");
+      vignetteGrad.addColorStop(0,                   "rgba(9,9,11,1)");
+      vignetteGrad.addColorStop(mobile ? 0.65 : 0.40, "rgba(9,9,11,1)");
+      vignetteGrad.addColorStop(mobile ? 0.92 : 0.85, "rgba(9,9,11,0)");
+      vignetteGrad.addColorStop(1,                   "rgba(9,9,11,0)");
     }
 
     function buildParticles() {
@@ -528,7 +531,7 @@ export default function Landing() {
       // Still queues the next frame so elapsed time stays accurate.
       if (W < 640) {
         const settled = now - startTime > DURATION + 800;
-        if (now - lastDrawTime < (settled ? 48 : 32)) {
+        if (now - lastDrawTime < (settled ? 66 : 32)) {
           animId = requestAnimationFrame(draw);
           return;
         }
@@ -654,8 +657,11 @@ export default function Landing() {
       if (!found) return;
       if (bestId) {
         history.replaceState(null, "", "#" + bestId);
-      } else if (location.hash) {
-        history.replaceState(null, "", location.pathname + location.search);
+      } else {
+        // Hero section — clear hash and force an immediate canvas repaint so
+        // the blank-canvas flash (iOS clears off-screen canvases) is at most 1 rAF.
+        if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+        lastDrawTime = 0;
       }
     }
     scrollRef!.addEventListener("scroll", onSectionScroll, { passive: true });
