@@ -207,6 +207,7 @@ function sampleWordBoundaryNormalized(w: number, h: number): { nx: number; ny: n
 export default function Landing() {
   let canvasRef: HTMLCanvasElement | undefined;
   let scrollRef: HTMLDivElement | undefined;
+  let heroRef: HTMLDivElement | undefined;
   let secondRef: HTMLDivElement | undefined;
   let llvmRef: HTMLDivElement | undefined;
   let textClassRef: HTMLDivElement | undefined;
@@ -595,34 +596,52 @@ export default function Landing() {
 
     // Hash navigation: scroll to the section named in the URL hash
     const hash = window.location.hash;
-    if      (hash === "#llvm")                llvmRef?.scrollIntoView({ behavior: "instant" });
+    if      (hash === "#explore")            secondRef?.scrollIntoView({ behavior: "instant" });
+    else if (hash === "#llvm")               llvmRef?.scrollIntoView({ behavior: "instant" });
     else if (hash === "#text-classification") textClassRef?.scrollIntoView({ behavior: "instant" });
     else if (hash === "#anomaly")             anomalyRef?.scrollIntoView({ behavior: "instant" });
     else if (hash === "#contact")             contactRef?.scrollIntoView({ behavior: "instant" });
 
     window.addEventListener("resize", handleResize);
 
-    // Keep URL hash in sync as sections snap into view, so browser back lands correctly
-    const sectionObserver = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const id = (entry.target as HTMLElement).id;
-            if (id) history.replaceState(null, "", "#" + id);
-          }
-        }
-      },
-      { root: scrollRef, threshold: 0.5 }
-    );
-    if (llvmRef)      sectionObserver.observe(llvmRef);
-    if (textClassRef) sectionObserver.observe(textClassRef);
-    if (anomalyRef)   sectionObserver.observe(anomalyRef);
-    if (contactRef)   sectionObserver.observe(contactRef);
+    // Keep URL hash in sync during scroll-snap transitions.
+    // A scroll event fires synchronously every frame of the snap animation,
+    // so getBoundingClientRect gives us the actual visible height of each section
+    // in real-time — no batching delay like IntersectionObserver.
+    const sections = [
+      { el: heroRef,      id: ""                   },
+      { el: secondRef,    id: "explore"             },
+      { el: llvmRef,      id: "llvm"                },
+      { el: textClassRef, id: "text-classification" },
+      { el: anomalyRef,   id: "anomaly"             },
+      { el: contactRef,   id: "contact"             },
+    ];
+    function onSectionScroll() {
+      if (!scrollRef) return;
+      const cTop    = scrollRef.getBoundingClientRect().top;
+      const cBottom = cTop + scrollRef.clientHeight;
+      let bestVis = 0;
+      let bestId  = "";
+      let found   = false;
+      for (const { el, id } of sections) {
+        if (!el) continue;
+        const r   = el.getBoundingClientRect();
+        const vis = Math.max(0, Math.min(cBottom, r.bottom) - Math.max(cTop, r.top));
+        if (vis > bestVis) { bestVis = vis; bestId = id; found = true; }
+      }
+      if (!found) return;
+      if (bestId) {
+        history.replaceState(null, "", "#" + bestId);
+      } else if (location.hash) {
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+    }
+    scrollRef!.addEventListener("scroll", onSectionScroll, { passive: true });
 
     onCleanup(() => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
-      sectionObserver.disconnect();
+      scrollRef?.removeEventListener("scroll", onSectionScroll);
     });
   });
 
@@ -633,7 +652,7 @@ export default function Landing() {
       style="scroll-snap-type: y mandatory;"
     >
       {/* Hero section */}
-      <div class="relative h-dvh w-full shrink-0" style="scroll-snap-align: start;">
+      <div ref={heroRef} class="relative h-dvh w-full shrink-0" style="scroll-snap-align: start;">
         <canvas ref={canvasRef} class="absolute inset-0" />
 
         {/* Chevron */}
@@ -668,6 +687,7 @@ export default function Landing() {
       {/* Explore section */}
       <div
         ref={secondRef}
+        id="explore"
         class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
