@@ -573,11 +573,11 @@ export default function Landing() {
   return (
     <div
       ref={scrollRef}
-      class="h-screen w-full overflow-y-auto bg-zinc-950"
+      class="h-dvh w-full overflow-y-auto bg-zinc-950"
       style="scroll-snap-type: y mandatory;"
     >
       {/* Hero section */}
-      <div class="relative h-screen w-full shrink-0" style="scroll-snap-align: start;">
+      <div class="relative h-dvh w-full shrink-0" style="scroll-snap-align: start;">
         <canvas ref={canvasRef} class="absolute inset-0" />
 
         {/* Chevron */}
@@ -612,7 +612,7 @@ export default function Landing() {
       {/* Explore section */}
       <div
         ref={secondRef}
-        class="min-h-screen w-full shrink-0 flex flex-col"
+        class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
         <div class="flex-1 flex items-center justify-center px-6 py-8">
@@ -670,7 +670,7 @@ export default function Landing() {
       {/* ── LLVM Pass Optimization ── */}
       <div
         ref={llvmRef}
-        class="min-h-screen w-full shrink-0 flex flex-col"
+        class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
         <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
@@ -745,7 +745,7 @@ export default function Landing() {
       {/* ── On-Device Text Classification ── */}
       <div
         ref={textClassRef}
-        class="min-h-screen w-full shrink-0 flex flex-col"
+        class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
         <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
@@ -820,13 +820,13 @@ export default function Landing() {
       {/* ── Sensor Anomaly Detection ── */}
       <div
         ref={anomalyRef}
-        class="min-h-screen w-full shrink-0 flex flex-col"
+        class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
         <div class="flex-1 flex items-center justify-center px-6 py-6 lg:py-10">
         <div class="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-16" style='font-family: "JetBrains Mono", monospace;'>
           <div class="w-full lg:w-1/2">
-            <svg viewBox="0 0 500 250" class="w-full" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="-12 0 512 250" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Input sensors */}
               {[50,82,114,146,178].map(y => <circle cx="28" cy={y} r="9" fill="none" stroke="#a8a29e" stroke-width="1.4" />)}
               <text x="28" y="207" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">sensor x</text>
@@ -916,7 +916,7 @@ export default function Landing() {
       {/* ── Consulting / Contact ── */}
       <div
         ref={contactRef}
-        class="min-h-screen w-full shrink-0 flex items-center justify-center px-6 py-12 lg:py-20"
+        class="min-h-dvh w-full shrink-0 flex items-center justify-center px-6 py-12 lg:py-20"
         style="scroll-snap-align: start;"
       >
         <div class="max-w-3xl w-full" style='font-family: "JetBrains Mono", monospace;'>
