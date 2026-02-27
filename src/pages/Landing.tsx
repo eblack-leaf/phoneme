@@ -97,21 +97,7 @@ function buildDiagram() {
   for (let i = 4; i < 9; i++) for (let j = 9; j < 12; j++) edges.push({ from: i, to: j });
   for (let i = 9; i < 12; i++) for (let j = 12; j < 15; j++) edges.push({ from: i, to: j });
 
-  const annotations: NNAnnotation[] = [
-    // Layer labels — above each column
-    { x: inX, y: 0.17, text: "INPUT FEATURES" },
-    { x: hX, y: 0.12, text: "DENSE(64, ReLU)" },
-    { x: oX, y: 0.24, text: "ACTOR / CRITIC" },
-    { x: aX, y: 0.24, text: "ATTENTION" },
-    // Bottom equations — spread across 3 rows to avoid clumping at narrow widths
-    { x: 0.15, y: 0.76, text: "∇θ J(θ)", align: "center" },
-    { x: 0.50, y: 0.76, text: "σ(z) = max(0, z)", align: "center" },
-    { x: 0.85, y: 0.76, text: "ε = 0.2", align: "center" },
-    { x: 0.20, y: 0.82, text: "wᵢⱼ ← wᵢⱼ − α·∂L/∂wᵢⱼ", align: "center" },
-    { x: 0.72, y: 0.82, text: "softmax(QKᵀ/√d)·V", align: "center" },
-    { x: 0.20, y: 0.88, text: "L = −Ê[min(rₜAₜ, clip(rₜ)Aₜ)]", align: "center" },
-    { x: 0.72, y: 0.88, text: "Aₜ = δₜ + (γλ)δₜ₊₁ + ...", align: "center" },
-  ];
+  const annotations: NNAnnotation[] = [];
 
   // Weight labels scattered near select edges
   const weights: NNWeight[] = [
@@ -409,13 +395,11 @@ export default function Landing() {
       const progress = Math.min(1, diagramElapsed / DIAGRAM_DRAW_DURATION);
       const t = progress * progress * (3 - 2 * progress);
 
-      const { nodes, edges, annotations, weights } = diagram;
+      const { nodes, edges, weights } = diagram;
       const edgeCount = Math.floor(edges.length * t);
-      const annotCount = Math.floor(annotations.length * t);
       const weightCount = Math.floor(weights.length * Math.min(1, t * 1.2));
 
       // Responsive font sizes
-      const annotFontSize = Math.max(11, Math.min(16, W * 0.012));
       const weightFontSize = Math.max(8, Math.min(11, W * 0.008));
       const nodeFontSize = Math.max(8, Math.min(11, W * 0.008));
 
@@ -464,17 +448,49 @@ export default function Landing() {
         ctx.fillText(wt.text, wt.x * W, wt.y * H);
       }
 
-      for (let i = 0; i < annotCount; i++) {
-        const a = annotations[i];
-        const annotProgress = Math.min(1, (t - (i / annotations.length)) * annotations.length * 1.5);
-        if (annotProgress <= 0) continue;
-        ctx.globalAlpha = 0.4 * annotProgress;
+      // Terminal panel — top right
+      const termLines: { text: string; dim: boolean }[] = [
+        { text: "$ ./train.py",          dim: false },
+        { text: "──────────────────────", dim: true  },
+        { text: "activation   relu",     dim: false },
+        { text: "optimizer    adam",     dim: false },
+        { text: "lr           1e-4",     dim: false },
+        { text: "hidden    [64, 64]",    dim: false },
+        { text: "dropout      0.20",     dim: false },
+        { text: "──────────────────────", dim: true  },
+        { text: "σ(z) = max(0,z)",       dim: false },
+        { text: "∇θ J(θ)",              dim: false },
+        { text: "wᵢⱼ − α·∂L/∂wᵢⱼ",    dim: false },
+        { text: "clip(rₜ, 1±ε)",        dim: false },
+      ];
+
+      const termFontSize = Math.max(9, Math.min(12, W * 0.0075));
+      const termLineH = termFontSize * 1.75;
+      const termPad = Math.max(8, W * 0.012);
+      const termX = W * 0.64;
+      const termY = H * 0.05;
+      const termW = W * 0.34;
+      const termH = termLines.length * termLineH + termPad * 2;
+      const termLineCount = Math.floor(termLines.length * Math.min(1, t * 1.4));
+
+      ctx.globalAlpha = 0.55 * t;
+      ctx.fillStyle = "rgba(9,9,11,0.88)";
+      ctx.fillRect(termX, termY, termW, termH);
+      ctx.globalAlpha = 0.18 * t;
+      ctx.strokeStyle = "#78716c";
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(termX, termY, termW, termH);
+
+      ctx.font = `${termFontSize}px "JetBrains Mono", monospace`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      for (let i = 0; i < termLineCount; i++) {
+        const line = termLines[i];
+        const lp = Math.min(1, (t - (i / termLines.length) * 0.7) * termLines.length * 1.5);
+        if (lp <= 0) continue;
+        ctx.globalAlpha = (line.dim ? 0.22 : 0.5) * lp;
         ctx.fillStyle = "#d6d3d1";
-        const size = a.size || annotFontSize;
-        ctx.font = `${size}px "JetBrains Mono", monospace`;
-        ctx.textAlign = a.align || "center";
-        ctx.textBaseline = "top";
-        ctx.fillText(a.text, a.x * W, a.y * H);
+        ctx.fillText(line.text, termX + termPad, termY + termPad + i * termLineH);
       }
 
       ctx.globalAlpha = 1;
