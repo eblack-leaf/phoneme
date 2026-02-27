@@ -266,6 +266,10 @@ export default function Landing() {
     const diagram = buildDiagram();
     const DIAGRAM_DELAY = 3400;
     const DIAGRAM_DRAW_DURATION = 3500;
+    const PULSE_START    = DIAGRAM_DELAY + DIAGRAM_DRAW_DURATION + 300; // 7200ms
+    const PULSE_DURATION = 1500; // ms — per-particle swell duration (snappy so stagger reads)
+    const PULSE_STAGGER  = 2000; // ms spread across ntx 0→1 (effective ~1200ms across text)
+    const PULSE_SCALE    = 5;    // peak jitter multiplier (1 + PULSE_SCALE at apex)
 
     function sizeCanvas() {
       dpr = window.devicePixelRatio || 1;
@@ -533,6 +537,10 @@ export default function Landing() {
       ctx.fillRect(0, 0, W, H / scaleY);
       ctx.restore();
 
+      // pulseElapsed is the same every frame — compute once outside the loop.
+      // Each particle offsets by its x position so the swell travels left→right.
+      const pulseElapsed = elapsed - PULSE_START;
+
       for (const p of particles) {
         const rawT = Math.max(0, Math.min(1, (elapsed - p.delay) / DURATION));
         const t = easeInOutQuart(rawT);
@@ -546,8 +554,12 @@ export default function Landing() {
         let drawX = p.x;
         let drawY = p.y;
         if (rawT >= 1) {
-          drawX = p.ntx * W + Math.sin(now * 0.0008 + p.phase) * 0.6;
-          drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 0.5;
+          const pPulse = pulseElapsed - p.ntx * PULSE_STAGGER;
+          const jitterAmp = (pPulse >= 0 && pPulse < PULSE_DURATION)
+            ? 1 + Math.sin((pPulse / PULSE_DURATION) * Math.PI) * PULSE_SCALE
+            : 1;
+          drawX = p.ntx * W + Math.sin(now * 0.0008 + p.phase) * 2.0 * jitterAmp;
+          drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 1.6 * jitterAmp;
         }
 
         const atlas = glyphAtlas.get(p.atlasKey);
@@ -565,10 +577,9 @@ export default function Landing() {
         setChevronVisible(true);
       }
 
-      // On mobile, stop the loop once everything is fully settled —
-      // the sub-pixel jitter is imperceptible and costs real GPU time.
-      const FULLY_SETTLED = DIAGRAM_DELAY + DIAGRAM_DRAW_DURATION + 400;
-      if (W < 640 && elapsed > FULLY_SETTLED) {
+      // On mobile, stop the loop once the pulse has finished —
+      // nothing changes after that and it costs real GPU time.
+      if (W < 640 && elapsed > PULSE_START + PULSE_STAGGER + PULSE_DURATION + 300) {
         return; // no next frame
       }
 
