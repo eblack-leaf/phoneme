@@ -593,11 +593,36 @@ export default function Landing() {
     handleResize();
     animId = requestAnimationFrame(draw);
 
+    // Hash navigation: scroll to the section named in the URL hash
+    const hash = window.location.hash;
+    if      (hash === "#llvm")                llvmRef?.scrollIntoView({ behavior: "instant" });
+    else if (hash === "#text-classification") textClassRef?.scrollIntoView({ behavior: "instant" });
+    else if (hash === "#anomaly")             anomalyRef?.scrollIntoView({ behavior: "instant" });
+    else if (hash === "#contact")             contactRef?.scrollIntoView({ behavior: "instant" });
+
     window.addEventListener("resize", handleResize);
+
+    // Keep URL hash in sync as sections snap into view, so browser back lands correctly
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = (entry.target as HTMLElement).id;
+            if (id) history.replaceState(null, "", "#" + id);
+          }
+        }
+      },
+      { root: scrollRef, threshold: 0.5 }
+    );
+    if (llvmRef)      sectionObserver.observe(llvmRef);
+    if (textClassRef) sectionObserver.observe(textClassRef);
+    if (anomalyRef)   sectionObserver.observe(anomalyRef);
+    if (contactRef)   sectionObserver.observe(contactRef);
 
     onCleanup(() => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
+      sectionObserver.disconnect();
     });
   });
 
@@ -701,6 +726,7 @@ export default function Landing() {
       {/* ── LLVM Pass Optimization ── */}
       <div
         ref={llvmRef}
+        id="llvm"
         class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
@@ -738,9 +764,9 @@ export default function Landing() {
               <text x="443" y="131" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">pass</text>
               <text x="443" y="150" text-anchor="middle" fill="#a8a29e" font-size="15" font-family="JetBrains Mono, monospace">select</text>
               {/* Reward feedback */}
-              <path d="M443 156 Q443 242 190 242 Q140 242 140 170" fill="none" stroke="#78716c" stroke-width="1" stroke-dasharray="4 3" />
-              <polygon points="140,168 136,178 146,178" fill="#78716c" />
-              <text x="310" y="259" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">reward: Δspeedup vs -O3</text>
+              <path d="M443 156 Q443 242 190 242 Q140 242 140 170" fill="none" stroke="#f97316" stroke-width="1.5" stroke-dasharray="4 3" />
+              <polygon points="140,168 136,178 146,178" fill="#f97316" />
+              <text x="310" y="259" text-anchor="middle" fill="#f97316" font-size="13" font-family="JetBrains Mono, monospace">reward: Δspeedup vs -O3</text>
             </svg>
           </div>
           <div class="w-full lg:w-1/2 space-y-6">
@@ -776,6 +802,7 @@ export default function Landing() {
       {/* ── On-Device Text Classification ── */}
       <div
         ref={textClassRef}
+        id="text-classification"
         class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
@@ -801,9 +828,9 @@ export default function Landing() {
               <text x="205" y="52" text-anchor="middle" fill="#78716c" font-size="13" font-family="JetBrains Mono, monospace">ReLU</text>
               <line x1="236" y1="115" x2="258" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Global max pool */}
-              <rect x="258" y="90" width="66" height="50" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
-              <text x="291" y="112" text-anchor="middle" fill="#a8a29e" font-size="13" font-family="JetBrains Mono, monospace">global</text>
-              <text x="291" y="128" text-anchor="middle" fill="#a8a29e" font-size="13" font-family="JetBrains Mono, monospace">max pool</text>
+              <rect x="258" y="90" width="66" height="50" rx="5" fill="none" stroke="#f97316" stroke-width="2" />
+              <text x="291" y="112" text-anchor="middle" fill="#f97316" font-size="13" font-family="JetBrains Mono, monospace">global</text>
+              <text x="291" y="128" text-anchor="middle" fill="#f97316" font-size="13" font-family="JetBrains Mono, monospace">max pool</text>
               <line x1="324" y1="115" x2="346" y2="115" stroke="#44403c" stroke-width="1" />
               {/* Dense */}
               <rect x="346" y="96" width="54" height="38" rx="5" fill="none" stroke="#a8a29e" stroke-width="1.4" />
@@ -851,6 +878,7 @@ export default function Landing() {
       {/* ── Sensor Anomaly Detection ── */}
       <div
         ref={anomalyRef}
+        id="anomaly"
         class="min-h-dvh w-full shrink-0 flex flex-col"
         style="scroll-snap-align: start;"
       >
@@ -947,6 +975,7 @@ export default function Landing() {
       {/* ── Consulting / Contact ── */}
       <div
         ref={contactRef}
+        id="contact"
         class="min-h-dvh w-full shrink-0 flex items-center justify-center px-6 py-12 lg:py-20"
         style="scroll-snap-align: start;"
       >
