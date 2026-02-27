@@ -101,14 +101,23 @@ function buildDiagram() {
 
   // Weight labels scattered near select edges
   const weights: NNWeight[] = [
-    { x: (inX + hX) / 2 - 0.02, y: 0.26, text: "0.73" },
-    { x: (inX + hX) / 2 + 0.03, y: 0.42, text: "−0.41" },
-    { x: (inX + hX) / 2 - 0.01, y: 0.58, text: "1.08" },
-    { x: (hX + oX) / 2 + 0.02, y: 0.30, text: "0.22" },
-    { x: (hX + oX) / 2 - 0.02, y: 0.50, text: "−0.67" },
-    { x: (hX + oX) / 2 + 0.01, y: 0.62, text: "0.95" },
-    { x: (oX + aX) / 2, y: 0.38, text: "0.54" },
-    { x: (oX + aX) / 2 - 0.01, y: 0.56, text: "−0.33" },
+    // input → hidden
+    { x: (inX + hX) / 2 - 0.03, y: 0.23, text: "0.73" },
+    { x: (inX + hX) / 2 + 0.02, y: 0.33, text: "−0.41" },
+    { x: (inX + hX) / 2 - 0.02, y: 0.44, text: "1.08" },
+    { x: (inX + hX) / 2 + 0.03, y: 0.55, text: "0.31" },
+    { x: (inX + hX) / 2 - 0.01, y: 0.64, text: "−0.79" },
+    { x: (inX + hX) / 2 + 0.01, y: 0.74, text: "0.52" },
+    // hidden → output
+    { x: (hX + oX) / 2 + 0.02, y: 0.27, text: "0.22" },
+    { x: (hX + oX) / 2 - 0.03, y: 0.38, text: "−0.67" },
+    { x: (hX + oX) / 2 + 0.01, y: 0.50, text: "0.95" },
+    { x: (hX + oX) / 2 - 0.01, y: 0.60, text: "−0.18" },
+    { x: (hX + oX) / 2 + 0.02, y: 0.70, text: "0.84" },
+    // output → attention
+    { x: (oX + aX) / 2 + 0.01, y: 0.33, text: "0.54" },
+    { x: (oX + aX) / 2 - 0.02, y: 0.49, text: "−0.33" },
+    { x: (oX + aX) / 2 + 0.01, y: 0.62, text: "0.71" },
   ];
 
   return { nodes, edges, annotations, weights };
@@ -400,7 +409,7 @@ export default function Landing() {
       const weightCount = Math.floor(weights.length * Math.min(1, t * 1.2));
 
       // Responsive font sizes
-      const weightFontSize = Math.max(8, Math.min(11, W * 0.008));
+      const weightFontSize = Math.max(9, Math.min(12, W * 0.009));
       const nodeFontSize = Math.max(8, Math.min(11, W * 0.008));
 
       ctx.lineWidth = 1;
@@ -440,7 +449,7 @@ export default function Landing() {
         const wt = weights[i];
         const wtProgress = Math.min(1, (t - (i / weights.length) * 0.6) * 3);
         if (wtProgress <= 0) continue;
-        ctx.globalAlpha = 0.28 * wtProgress;
+        ctx.globalAlpha = 0.45 * wtProgress;
         ctx.fillStyle = "#d6d3d1";
         ctx.font = `${weightFontSize}px "JetBrains Mono", monospace`;
         ctx.textAlign = "center";
@@ -450,7 +459,7 @@ export default function Landing() {
 
       // Terminal panel — top right
       const termLines: { text: string; dim: boolean }[] = [
-        { text: "$ ./train.py",          dim: false },
+        { text: "$ cargo run --release",  dim: false },
         { text: "──────────────────────", dim: true  },
         { text: "activation   relu",     dim: false },
         { text: "optimizer    adam",     dim: false },
@@ -476,7 +485,7 @@ export default function Landing() {
       ctx.globalAlpha = 0.55 * t;
       ctx.fillStyle = "rgba(9,9,11,0.88)";
       ctx.fillRect(termX, termY, termW, termH);
-      ctx.globalAlpha = 0.18 * t;
+      ctx.globalAlpha = 0.25 * t;
       ctx.strokeStyle = "#78716c";
       ctx.lineWidth = 0.5;
       ctx.strokeRect(termX, termY, termW, termH);
@@ -488,7 +497,7 @@ export default function Landing() {
         const line = termLines[i];
         const lp = Math.min(1, (t - (i / termLines.length) * 0.7) * termLines.length * 1.5);
         if (lp <= 0) continue;
-        ctx.globalAlpha = (line.dim ? 0.22 : 0.5) * lp;
+        ctx.globalAlpha = (line.dim ? 0.38 : 0.75) * lp;
         ctx.fillStyle = "#d6d3d1";
         ctx.fillText(line.text, termX + termPad, termY + termPad + i * termLineH);
       }
