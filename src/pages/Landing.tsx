@@ -558,8 +558,13 @@ export default function Landing() {
           const jitterAmp = (pPulse >= 0 && pPulse < PULSE_DURATION)
             ? 1 + Math.sin((pPulse / PULSE_DURATION) * Math.PI) * PULSE_SCALE
             : 1;
-          drawX = p.ntx * W + Math.sin(now * 0.0008 + p.phase) * 2.0 * jitterAmp;
-          drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * 1.6 * jitterAmp;
+          // Fade jitter in over 500ms after settling — eliminates the snap at rawT=1.
+          // Scale amplitude with W so mobile stays crisp (small viewport, dense particles).
+          const fadeIn  = Math.min(1, (elapsed - p.delay - DURATION) / 500);
+          const jx = Math.min(W * 0.0028, 2.0) * jitterAmp * fadeIn;
+          const jy = Math.min(W * 0.0022, 1.6) * jitterAmp * fadeIn;
+          drawX = p.ntx * W + Math.sin(now * 0.0008 + p.phase) * jx;
+          drawY = p.nty * H + Math.cos(now * 0.001 + p.phase) * jy;
         }
 
         const atlas = glyphAtlas.get(p.atlasKey);
@@ -575,12 +580,6 @@ export default function Landing() {
       // Show chevron after particles settle + diagram starts drawing
       if (!chevronVisible() && elapsed > DURATION + 800) {
         setChevronVisible(true);
-      }
-
-      // On mobile, stop the loop once the pulse has finished —
-      // nothing changes after that and it costs real GPU time.
-      if (W < 640 && elapsed > PULSE_START + PULSE_STAGGER + PULSE_DURATION + 300) {
-        return; // no next frame
       }
 
       animId = requestAnimationFrame(draw);
