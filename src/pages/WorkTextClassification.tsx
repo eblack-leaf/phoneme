@@ -37,10 +37,10 @@ export default function WorkTextClassification() {
             Text Classification
           </h1>
           <p class="text-stone-400 text-lg leading-relaxed max-w-2xl">
-            On-device Kim-CNN pipeline for text intent detection
+            Finding the smallest, fastest text classifier that can train entirely on-device — no data leaves the user
           </p>
           <div class="flex flex-wrap gap-2 pt-2">
-            {["nlp", "kim-cnn", "glove-100d", "on-device", "rust"].map(tag => (
+            {["nlp", "kim-cnn", "fasttext", "transformer", "glove", "on-device", "rust"].map(tag => (
               <span class="px-2.5 py-1 text-xs border border-stone-700 text-stone-500 rounded">
                 {tag}
               </span>
@@ -50,7 +50,8 @@ export default function WorkTextClassification() {
 
         {/* Architecture */}
         <section class="space-y-6">
-          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Architecture</h2>
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Kim CNN</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">Best accuracy-per-parameter across all datasets. Parallel multi-scale convolutions with global max pool — usually the best tradeoff in the sweep.</p>
           <div class="border border-stone-800 rounded-lg p-4 bg-zinc-900/40">
             <svg viewBox="0 0 560 295" class="w-full" xmlns="http://www.w3.org/2000/svg">
               {/* Embedding (tall, spans all 3 rows) */}
@@ -119,35 +120,39 @@ export default function WorkTextClassification() {
 
         {/* Metrics */}
         <section class="space-y-6">
-          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Metrics</h2>
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Results</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">Best per architecture per dataset. <span class="text-stone-400">non-embed params</span> is the model logic excluding the embedding table — the number that matters for on-device cost.</p>
           <div class="border border-stone-800 rounded-lg overflow-hidden">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-stone-800 text-stone-500">
                   <th class="text-left px-4 py-3 font-normal">dataset</th>
-                  <th class="text-right px-4 py-3 font-normal">accuracy</th>
-                  <th class="text-right px-4 py-3 font-normal">macro F1</th>
-                  <th class="text-right px-4 py-3 font-normal">latency (ms)</th>
-                  <th class="text-right px-4 py-3 font-normal hidden sm:table-cell">val n</th>
+                  <th class="text-left px-4 py-3 font-normal hidden sm:table-cell">arch</th>
+                  <th class="text-left px-4 py-3 font-normal hidden sm:table-cell">embed</th>
+                  <th class="text-right px-4 py-3 font-normal">val acc</th>
+                  <th class="text-right px-4 py-3 font-normal hidden sm:table-cell">non-embed params</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { dataset: "SMS Spam",  acc: "99.16%", f1: "0.9824", lat: "0.26", n: "836"    },
-                  { dataset: "IMDB",      acc: "89.96%", f1: "0.8996", lat: "0.27", n: "7,500"  },
-                  { dataset: "AG News",   acc: "93.12%", f1: "0.9312", lat: "0.41", n: "19,140" },
+                  { dataset: "AG News",  arch: "kimcnn",      embed: "GloVe 300d", acc: "93.11%", params: "463k"  },
+                  { dataset: "AG News",  arch: "fasttext",    embed: "GloVe 300d", acc: "92.00%", params: "<1k"   },
+                  { dataset: "IMDB",     arch: "kimcnn",      embed: "GloVe 100d", acc: "90.23%", params: "155k"  },
+                  { dataset: "IMDB",     arch: "fasttext",    embed: "GloVe 100d", acc: "89.68%", params: "<1k"   },
+                  { dataset: "SMS Spam", arch: "kimcnn",      embed: "GloVe 100d", acc: "99.40%", params: "77k"   },
+                  { dataset: "SMS Spam", arch: "fasttext",    embed: "GloVe 100d", acc: "98.33%", params: "<1k"   },
                 ].map((row, i, arr) => (
                   <tr class={i < arr.length - 1 ? "border-b border-stone-800/60" : ""}>
                     <td class="px-4 py-3 text-stone-300">{row.dataset}</td>
+                    <td class="px-4 py-3 text-stone-500 font-mono hidden sm:table-cell">{row.arch}</td>
+                    <td class="px-4 py-3 text-stone-500 hidden sm:table-cell">{row.embed}</td>
                     <td class="px-4 py-3 text-right text-orange-300 font-mono">{row.acc}</td>
-                    <td class="px-4 py-3 text-right text-orange-300 font-mono">{row.f1}</td>
-                    <td class="px-4 py-3 text-right text-orange-300 font-mono">{row.lat}</td>
-                    <td class="px-4 py-3 text-right text-stone-600 font-mono hidden sm:table-cell">{row.n}</td>
+                    <td class="px-4 py-3 text-right text-stone-600 font-mono hidden sm:table-cell">{row.params}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p class="px-4 py-2 text-xs text-stone-700 border-t border-stone-800">median forward latency · batch=1 · CPU</p>
+            <p class="px-4 py-2 text-xs text-stone-700 border-t border-stone-800">sweep runner · KimCNN + FastText shown · AG News 4-class / IMDB binary / SMS binary</p>
           </div>
         </section>
 
@@ -155,14 +160,55 @@ export default function WorkTextClassification() {
         <section class="space-y-4 text-stone-400 text-base leading-relaxed max-w-2xl">
           <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Detail</h2>
           <p>
-            Kim-CNN with GloVe 100d embeddings for local intent detection and spam filtering.
-            Parallel conv branches (k=3, 4, 5) capture n-gram features at multiple scales,
-            pooled and concatenated before classification. Runs entirely on-device — no data leaves, no cloud inference.
+            A sweep runner trains every combination of architecture × hyperparameter grid and
+            produces a results table sorted by validation accuracy, with parameter counts per run.
+            The key question: <span class="text-stone-300">how much accuracy do you give up as you shrink the model?</span>
+          </p>
+          <p>
+            Five architectures are compared —
+            <span class="text-stone-300"> FastText</span> (embedding mean pool),
+            <span class="text-stone-300"> Kim CNN</span> (multi-scale conv),
+            <span class="text-stone-300"> Bidirectional GRU</span>,
+            <span class="text-stone-300"> Tiny Transformer</span>, and a custom
+            <span class="text-stone-300"> CnnText</span> slot.
+            Embeddings sweep over BPE from scratch and pretrained GloVe/fastText vectors.
+            Training runs entirely on-device — no data leaves the user.
           </p>
           <p class="text-stone-500">
-            Fine-tune on user-specific patterns without exfiltrating training data.
-            The model lives on the device; so does everything it learns.
+            Inference always uses the CPU NDArray backend regardless of training backend,
+            keeping deployment simple and dependency-free.
           </p>
+        </section>
+
+        {/* Findings */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Findings</h2>
+          <div class="space-y-3">
+            {[
+              ["KimCNN wins accuracy across all datasets", "Parallel multi-scale convs with max pool beats the tiny transformer in every configuration tested."],
+              ["GloVe beats BPE consistently", "BPE transformers on SMS top out at 96.77%; GloVe transformers reach 99.04%. Pretrained word vectors carry substantial signal small models can't learn from scratch."],
+              ["GloVe 100d ≥ GloVe 300d in most cases", "300d costs 3× the embedding memory with marginal or no accuracy gain. The exception is AG News KimCNN (93.11% vs 92.96%) — 0.15% gain for 3× more embedding params."],
+              ["FastText is remarkably efficient", "Nearly competitive accuracy with essentially zero non-embed parameters. For latency-critical or memory-constrained on-device deployment it is the first choice. SMS FastText: 98.33% with ~200 non-embed params."],
+              ["AG News ceiling is ~93%", "Label ambiguity between Business/SciTech and World/Business cannot be resolved by better pooling or embeddings. Confident learning / label cleaning is the only path to meaningful improvement."],
+            ].map(([title, body]) => (
+              <div class="border border-stone-800 rounded-lg px-4 py-3 bg-zinc-900/40 space-y-1">
+                <p class="text-stone-300 text-sm">{title}</p>
+                <p class="text-stone-600 text-xs leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stack */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Stack</h2>
+          <div class="flex flex-wrap gap-2">
+            {["Rust", "burn (WebGPU / NDArray)", "AG News", "IMDB", "SMS Spam", "GloVe", "BPE"].map(item => (
+              <span class="px-3 py-1.5 text-xs border border-stone-800 text-stone-500 rounded font-mono bg-zinc-900/40">
+                {item}
+              </span>
+            ))}
+          </div>
         </section>
 
       </div>

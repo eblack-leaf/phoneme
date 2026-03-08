@@ -16,17 +16,15 @@ export default function WorkLLVM() {
           Back to overview
         </a>
         <a
-          href="https://github.com/placeholder/llvm-pass-rl"
-          class="inline-flex items-center gap-1.5 text-stone-600 text-sm cursor-not-allowed select-none"
-          tabindex="-1"
-          aria-disabled="true"
-          onClick={(e) => e.preventDefault()}
+          href="https://github.com/eblack-leaf/llvm-lstm"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-stone-400 hover:text-orange-400 transition-colors text-sm"
         >
           GitHub
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M7 7h10v10M7 17L17 7" />
           </svg>
-          <span class="text-xs text-stone-700">(soon)</span>
         </a>
       </nav>
 
@@ -115,15 +113,109 @@ export default function WorkLLVM() {
         <section class="space-y-4 text-stone-400 text-base leading-relaxed max-w-2xl">
           <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Detail</h2>
           <p>
-            The model observes IR features extracted per function and learns pass
-            orderings that outperform <span class="text-stone-300">-O3</span>.
-            Reward signal: measured runtime speedup. No labeled data — the compiler
-            and hardware are the oracle.
+            Modern compilers apply optimization passes in a fixed order determined
+            by <span class="text-stone-300">-O2</span>/<span class="text-stone-300">-O3</span> flags.
+            This project treats pass selection as a sequential decision problem: an LSTM
+            policy trained with PPO observes IR features after each applied pass and selects
+            the next optimization to maximize runtime speedup.
+          </p>
+          <p>
+            The agent operates episodically — observe current IR features, select a pass
+            (or STOP), apply it via <span class="text-stone-300 font-mono text-sm">opt-20</span>,
+            re-extract features, receive a reward proportional to speedup over the
+            <span class="text-stone-300"> -O3</span> baseline. No labeled data;
+            the compiler and hardware are the oracle.
           </p>
           <p class="text-stone-500">
-            Trains entirely on-device. PPO clips the policy gradient for stable
-            updates; the LSTM carries context across the pass sequence.
+            PPO clips the policy gradient for stable updates. The LSTM carries context
+            across the pass sequence. IR features are extracted by fast text-parsing of
+            <span class="font-mono text-sm"> .ll</span> files (&lt;50ms per file).
           </p>
+        </section>
+
+        {/* Action Space */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Action Space</h2>
+          <p class="text-stone-500 text-sm leading-relaxed max-w-2xl">
+            28 high-impact transforms from LLVM's <span class="text-stone-400">-O3</span> inner
+            kernel + a STOP action (29 total). An extended set of 86 actions adds interprocedural
+            and module-level passes via a feature flag.
+          </p>
+          <div class="border border-stone-800 rounded-lg p-4 bg-zinc-900/40 font-mono text-xs text-stone-500 leading-relaxed">
+            <span class="text-stone-400">instcombine</span>, <span class="text-stone-400">inline</span>, <span class="text-stone-400">loop-unroll</span>, <span class="text-stone-400">licm</span>, <span class="text-stone-400">gvn</span>, <span class="text-stone-400">sroa</span>, <span class="text-stone-400">mem2reg</span>, <span class="text-stone-400">simplifycfg</span>, <span class="text-stone-400">dse</span>, <span class="text-stone-400">reassociate</span>,{" "}
+            <span class="text-stone-400">jump-threading</span>, <span class="text-stone-400">loop-rotate</span>, <span class="text-stone-400">adce</span>, <span class="text-stone-400">early-cse</span>, <span class="text-stone-400">tailcallelim</span>, <span class="text-stone-400">loop-vectorize</span>, <span class="text-stone-400">slp-vectorize</span>, <span class="text-stone-400">sccp</span>,{" "}
+            <span class="text-stone-400">correlated-propagation</span>, <span class="text-stone-400">loop-idiom</span>, <span class="text-stone-400">indvars</span>, <span class="text-stone-400">aggressive-instcombine</span>, <span class="text-stone-400">mldst-motion</span>, <span class="text-stone-400">newgvn</span>,{" "}
+            <span class="text-stone-400">loop-deletion</span>, <span class="text-stone-400">merge-func</span>, <span class="text-stone-400">div-rem-pairs</span> + <span class="text-orange-700">STOP</span>
+          </div>
+        </section>
+
+        {/* IR Features */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">IR Feature Vector</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">18-dimensional observation extracted per function from LLVM IR text.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-px border border-stone-800 rounded-lg overflow-hidden">
+            {[
+              ["add_count", "add/fadd/sub/fsub instructions"],
+              ["mul_count", "mul/div/rem variants"],
+              ["load_count", "load instructions"],
+              ["store_count", "store instructions"],
+              ["br_count", "branch/switch instructions"],
+              ["call_count", "call/invoke instructions"],
+              ["phi_count", "phi nodes"],
+              ["alloca_count", "stack allocations"],
+              ["gep_count", "getelementptr instructions"],
+              ["icmp_count", "integer comparisons"],
+              ["fcmp_count", "float comparisons"],
+              ["ret_count", "return instructions"],
+              ["other_inst_count", "all other instructions"],
+              ["basic_block_count", "total basic blocks"],
+              ["total_instruction_count", "all instructions"],
+              ["function_count", "defined functions"],
+              ["loop_depth_approx", "back-edge count (loop proxy)"],
+              ["load_store_ratio", "load/store ratio"],
+            ].map(([name, desc]) => (
+              <div class="flex gap-3 px-4 py-2.5 bg-zinc-900/40">
+                <span class="font-mono text-xs text-stone-400 w-44 shrink-0">{name}</span>
+                <span class="text-xs text-stone-600">{desc}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Benchmarks */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Benchmarks</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">
+            32 self-contained C programs. Each measures its own execution time with{" "}
+            <span class="font-mono text-stone-400 text-xs">clock_gettime</span> and reports
+            the median over multiple iterations.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-px border border-stone-800 rounded-lg overflow-hidden">
+            {[
+              ["Linear algebra", "dot_product, matrix_multiply_tiled, convolution, stencil2d"],
+              ["Sorting / searching", "mergesort, quicksort, binary_search, kmp_search"],
+              ["Data structures", "binary_tree, hashtable, heap_ops"],
+              ["Algorithms", "fft, karatsuba, levenshtein, nqueens, lz_compress"],
+              ["Misc", "miniray, physics_sim, trig_approx, interpreter, regex_match"],
+            ].map(([cat, examples]) => (
+              <div class="flex flex-col gap-1 px-4 py-3 bg-zinc-900/40">
+                <span class="text-xs text-stone-400">{cat}</span>
+                <span class="text-xs text-stone-600 font-mono">{examples}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stack */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Stack</h2>
+          <div class="flex flex-wrap gap-2">
+            {["Rust 1.75+", "LLVM 20", "burn (NDArray)", "rayon", "PPO", "LSTM"].map(item => (
+              <span class="px-3 py-1.5 text-xs border border-stone-800 text-stone-500 rounded font-mono bg-zinc-900/40">
+                {item}
+              </span>
+            ))}
+          </div>
         </section>
 
       </div>
