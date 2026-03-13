@@ -16,17 +16,15 @@ export default function WorkAnomalyDetection() {
           Back to overview
         </a>
         <a
-          href="https://github.com/placeholder/anomaly-detection"
-          class="inline-flex items-center gap-1.5 text-stone-600 text-sm cursor-not-allowed select-none"
-          tabindex="-1"
-          aria-disabled="true"
-          onClick={(e) => e.preventDefault()}
+          href="https://github.com/eblack-leaf/auto-iot"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-stone-400 hover:text-orange-400 transition-colors text-sm"
         >
           GitHub
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M7 7h10v10M7 17L17 7" />
           </svg>
-          <span class="text-xs text-stone-700">(soon)</span>
         </a>
       </nav>
 
@@ -39,10 +37,10 @@ export default function WorkAnomalyDetection() {
             Anomaly Detection
           </h1>
           <p class="text-stone-400 text-lg leading-relaxed max-w-2xl">
-            Autoencoder for unsupervised sensor anomaly detection
+            Lightweight autoencoder-based anomaly detection for IoT and edge devices
           </p>
           <div class="flex flex-wrap gap-2 pt-2">
-            {["autoencoder", "unsupervised", "rust"].map(tag => (
+            {["autoencoder", "unsupervised", "rust", "burn", "wgpu", "edge-ml"].map(tag => (
               <span class="px-2.5 py-1 text-xs border border-stone-700 text-stone-500 rounded">
                 {tag}
               </span>
@@ -116,18 +114,24 @@ export default function WorkAnomalyDetection() {
         {/* Metrics */}
         <section class="space-y-6">
           <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Metrics</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">
+            Best result from grid search on nab-machine (400 epochs, batch 512, clean training).
+            Composite score = AUROC×0.6 + val_loss×0.25 + params×0.15.
+          </p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="border border-dashed border-stone-700 rounded-lg p-6 flex flex-col gap-2">
+            <div class="border border-stone-800 rounded-lg p-6 flex flex-col gap-2 bg-zinc-900/40">
               <span class="text-stone-500 text-sm">AUC-ROC</span>
-              <span class="text-stone-600 text-2xl font-bold">—</span>
+              <span class="text-orange-300 text-2xl font-bold">0.9976</span>
             </div>
-            <div class="border border-dashed border-stone-700 rounded-lg p-6 flex flex-col gap-2">
-              <span class="text-stone-500 text-sm">reconstruction error threshold</span>
-              <span class="text-stone-600 text-2xl font-bold">—</span>
+            <div class="border border-stone-800 rounded-lg p-6 flex flex-col gap-2 bg-zinc-900/40">
+              <span class="text-stone-500 text-sm">model size</span>
+              <span class="text-orange-300 text-2xl font-bold">5 264 params</span>
+              <span class="text-stone-600 text-xs">~21 KB f32</span>
             </div>
-            <div class="border border-dashed border-stone-700 rounded-lg p-6 flex flex-col gap-2">
-              <span class="text-stone-500 text-sm">false positive rate</span>
-              <span class="text-stone-600 text-2xl font-bold">—</span>
+            <div class="border border-stone-800 rounded-lg p-6 flex flex-col gap-2 bg-zinc-900/40">
+              <span class="text-stone-500 text-sm">composite score</span>
+              <span class="text-orange-300 text-2xl font-bold">0.9551</span>
+              <span class="text-stone-600 text-xs">shallow · latent=16 · hidden=32</span>
             </div>
           </div>
         </section>
@@ -136,13 +140,104 @@ export default function WorkAnomalyDetection() {
         <section class="space-y-4 text-stone-400 text-base leading-relaxed max-w-2xl">
           <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Detail</h2>
           <p>
-            Autoencoder trained on-device for edge IoT. Learns normal sensor patterns
-            during a calibration window, then flags deviations in real-time.
+            Autoencoders are trained entirely on your local machine — no cloud, no CUDA required.
+            WGPU provides GPU acceleration across Vulkan, Metal, and DX12 with a software fallback.
+          </p>
+          <p>
+            The core insight is <span class="text-stone-300">clean training</span>: the model sees
+            only normal samples during training, forcing the bottleneck to generalise the normal
+            manifold. At inference time, anomalies produce high reconstruction error because
+            the learned encoding has no way to represent them. No labels required during training —
+            reconstruction error is the anomaly signal.
           </p>
           <p class="text-stone-500">
-            No labeled data required — reconstruction error is the anomaly signal.
-            Works on any time-series sensor: vibration, temperature, current draw.
+            A grid search over 36 configurations (2 architectures × 2 learning rates × 3 latent
+            dims × 3 hidden dims) finds the smallest model that achieves strong AUROC.
+            The recommended edge deployment is the shallow autoencoder at latent=16, hidden=32 —
+            5 264 parameters, ~21 KB in f32, converging in ~200–350 epochs.
           </p>
+        </section>
+
+        {/* Architectures */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Architectures</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">
+            ReLU activations in hidden layers, Sigmoid on output to match MinMax-normalised inputs.
+            Bottleneck must be tight — 3–10% of input dim keeps the model from memorising anomalies.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-px border border-stone-800 rounded-lg overflow-hidden">
+            {[
+              ["shallow", "input → hidden → latent → hidden → output", "Fastest, fewest params. Top composite score on nab-machine."],
+              ["deep",    "input → H → H/2 → latent → H/2 → H → output", "Better capacity. Highest raw AUROC (0.9995) without clean training."],
+            ].map(([name, layers, note]) => (
+              <div class="flex flex-col gap-2 px-4 py-4 bg-zinc-900/40">
+                <span class="text-stone-300 text-sm font-semibold">{name}</span>
+                <span class="font-mono text-xs text-stone-500">{layers}</span>
+                <span class="text-xs text-stone-600">{note}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Datasets */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Datasets</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">
+            All labels follow the same convention: <span class="text-stone-400 font-mono">0 = normal</span>,{" "}
+            <span class="text-orange-700 font-mono">1 = anomaly</span>.
+            Sequence length is configurable via a sliding window.
+          </p>
+          <div class="grid grid-cols-1 gap-px border border-stone-800 rounded-lg overflow-hidden">
+            {[
+              ["nab-machine", "IoT machine temperature", "Numenta NAB — real-world industrial sensor data with labeled fault events"],
+              ["nab-taxi",    "NYC taxi passengers",     "Numenta NAB — demand time series with anomalous spikes and dropouts"],
+              ["synthetic",   "Gaussian + outliers",     "Generated in-memory. Seeded (StdRng 42) for full reproducibility"],
+            ].map(([name, domain, note]) => (
+              <div class="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 px-4 py-3 bg-zinc-900/40">
+                <span class="font-mono text-xs text-stone-400 sm:w-28 shrink-0">{name}</span>
+                <span class="text-xs text-stone-500 sm:w-44 shrink-0">{domain}</span>
+                <span class="text-xs text-stone-600">{note}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Model size */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Edge Footprints</h2>
+          <p class="text-stone-500 text-sm max-w-2xl">
+            Approximate parameter counts and RAM for window-64 inputs (f32).
+            Every training run prints live parameter count and footprint for direct comparison.
+          </p>
+          <div class="grid grid-cols-1 gap-px border border-stone-800 rounded-lg overflow-hidden">
+            {[
+              ["shallow", "32",  "4",  "~9 K",  "~36 KB"],
+              ["shallow", "64",  "8",  "~18 K", "~72 KB"],
+              ["shallow", "128", "16", "~54 K", "~216 KB"],
+              ["deep",    "64",  "8",  "~30 K", "~120 KB"],
+              ["deep",    "128", "16", "~95 K", "~380 KB"],
+            ].map(([arch, hidden, latent, params, ram]) => (
+              <div class="grid grid-cols-5 px-4 py-2.5 bg-zinc-900/40 text-xs">
+                <span class="text-stone-400 font-mono">{arch}</span>
+                <span class="text-stone-600">hidden={hidden}</span>
+                <span class="text-stone-600">latent={latent}</span>
+                <span class="text-stone-500">{params}</span>
+                <span class="text-stone-600">{ram}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stack */}
+        <section class="space-y-4">
+          <h2 class="text-stone-200 text-xl font-semibold tracking-tight">Stack</h2>
+          <div class="flex flex-wrap gap-2">
+            {["Rust 1.75+", "Burn 0.20.1", "WGPU", "Adam", "clap", "bhtsne", "reqwest"].map(item => (
+              <span class="px-3 py-1.5 text-xs border border-stone-800 text-stone-500 rounded font-mono bg-zinc-900/40">
+                {item}
+              </span>
+            ))}
+          </div>
         </section>
 
       </div>
