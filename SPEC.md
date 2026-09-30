@@ -61,8 +61,9 @@ trace.emit(Event::new("thread.add").set("category", "home"));   // appends a lin
 trace.send(&mut sink)?;                                    // when the app chooses
 ```
 
-- **Events are notifications, not data.** Nothing reads them to decide what is true. So `emit`
-  can't fail the app: a line that can't be written is lost, and `dropped()` counts it.
+- **The app never reads its events; the lab does.** Nothing reads them to decide what is true in
+  the app. So `emit` can't fail the app: a line that can't be written is lost, and `dropped()`
+  counts it. For the lab, losing one is losing one example.
 - **Append only.** `<app>.jsonl` beside `<app>.sent`, the byte offset `send` has reached. One
   write per line, so two processes emitting at once don't interleave.
 - **Send is explicit, and nothing else.** No queue, no conflicts, no commit. At least once: a crash
