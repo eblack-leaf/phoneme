@@ -132,6 +132,11 @@ impl Trace {
         }
     }
 
+    /// Which app's events these are.
+    pub fn app(&self) -> &str {
+        &self.app
+    }
+
     /// Events this trace couldn't write, since it was opened.
     pub fn dropped(&self) -> u64 {
         self.dropped.load(Ordering::Relaxed)
