@@ -1,0 +1,12 @@
+[package]
+name = "phoneme-trace"
+description = "Usage events: emitted where an app wants them, sent when it chooses, depended on by nothing"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true

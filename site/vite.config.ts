@@ -9,6 +9,9 @@ export default defineConfig({
   },
   base: "/phoneme/",
   build: {
-    outDir: 'docs',
+    // Pages serves /docs at the repo root. Vite won't clear a folder outside its root unless told,
+    // and old hashed assets would pile up.
+    outDir: '../docs',
+    emptyOutDir: true,
   }
 });
