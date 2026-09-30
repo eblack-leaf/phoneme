@@ -1,7 +1,7 @@
 # phoneme
 
-What phoneme is and what has been decided, before most of it is written. `trace/` is built; the
-rest is sketched here so the problems show up before the code does.
+What phoneme is and what has been decided. `trace/` is built and in use; the runtime and the lab
+are specified here and not written.
 
 ---
 
@@ -11,8 +11,8 @@ Where the models my apps use come from, and the public name for my ML work. Tiny
 models small enough to train and run on the device they serve, as part of how an app works rather
 than a panel beside it.
 
-- **It is** a trace for usage events, a runtime for running models (later), a lab for training
-  them (later), and the site.
+- **It is** a trace for usage events, a runtime for running models, a lab for training them, and
+  the site.
 - **It isn't** tied to my suite. Nothing here knows SurrealDB, datum, ops, or any app.
 
 ---
@@ -27,7 +27,7 @@ for my apps.
 |---|---|---|
 | trace | events, `emit`, `send`, the `Sink` trait, a file sink | a SurrealDB sink into its own ns/db, credentials through ops |
 | runtime | load a model from a path, run it on CPU | find the path through the `model` app |
-| lab | runs, snapshots, the sweep runner; sources are files | the viewer reader; formulations over the apps' cores |
+| lab | runs, snapshots, the sweep runner; sources are files | the reader over the apps and the events; runs in its database; formulations over the apps' data |
 | formulations | public datasets | threads, jobs, usage patterns |
 
 - **The rule.** Anything that names datum, ops, credentials, the `model` app or an app's types is
@@ -75,7 +75,7 @@ trace.send(&mut sink)?;                                    // when the app choos
 
 **Problem found:** an event emitted beside a `stage` records what I did, not what landed. datum
 can still refuse or discard the patch. **Resolution:** fine for usage ("I chose this"). A
-formulation that needs what landed reads it through the viewer and joins it to the events.
+formulation that needs what landed reads the records themselves and joins them to the events.
 
 **Problem found:** an event doesn't say which device it came from, and events from several devices
 meet in one place. **Resolution:** the sink stamps it. It runs on the device and knows which one it
@@ -85,16 +85,30 @@ is; phoneme doesn't.
 
 ## 5. runtime
 
-Not written. Load a model from a path and run it on CPU with burn's NDArray backend, as the phoneme
-sweeps already do for inference. Apps depend on it the way they depend on datum, so it must pull in
-nothing used for training. Where the path comes from (the `model` app, a version at a time) is
-morpheme's.
+Not written. `runtime/`, crate `phoneme-runtime`: what an app links to use a model. Apps reach it
+through morpheme, as they reach the trace.
+
+```rust
+let words = Embeddings::load(path)?;          // a pruned table: word -> vector, f16 on disk
+let v: Vec<f32> = words.mean(text);           // tokenise, look up, mean-pool; None-words skipped
+let head = Prototypes::new(named_vectors);    // label -> mean vector, built by the caller
+let best: Option<(label, score, margin)> = head.nearest(&v);
+```
+
+- **CPU only, and nothing used for training.** An app pulls in no burn autodiff and no dataset
+  code. The first model is a table lookup and a mean, which needs no framework at all; burn's
+  NDArray backend comes in with the first model that has layers (a learned projection, §7).
+- **Loaded from a path.** Which path, and which version, is morpheme's (the `model` app).
+- **The tokeniser is the lab's, byte for byte.** Lowercase, split on anything not a letter or
+  digit, the same in training and in the app. One function, here, used by both.
+- **Embeddings on disk:** a header (dimension, word count), the words, then the vectors as f16.
+  GloVe 100d cut to the 50k most frequent words is about 10 MB.
 
 ---
 
 ## 6. lab
 
-Not written, and not until a formulation exists to need it.
+Not written. `lab/`, crate `phoneme-lab`.
 
 **A formulation owns its problem:** what it reads, how it builds its inputs, the model, what counts
 as right, and how it's evaluated. There is no shared featurising by field type, and no fixed set of
@@ -103,16 +117,40 @@ task kinds. Each problem is posed on its own.
 **Shared is only what every run needs, whatever it's about:**
 
 ```
-read       where the data comes from        suite data (morpheme's viewer), trace events,
+read       where the data comes from        suite data (morpheme's reader), trace events,
                                             a public dataset, or nothing (a pretrained model)
-snapshot   what it was, frozen              a public dataset's is its file's hash
-run        formulation@version, snapshot,   the sweep runner's results table, kept across time
+snapshot   what it was, frozen              rows as JSON lines in a file named by its hash
+run        formulation@version, snapshot,   one row per run; a sweep is many runs
            params, metrics
 publish    the artifact, where apps get it  morpheme hands it to the `model` app
 ```
 
+```rust
+trait Formulation {
+    const NAME: &str;
+    const VERSION: u32;                    // bumped when what it reads or scores changes
+    type Params: Serialize;
+    fn read(&self) -> Result<Snapshot>;    // the formulation's own query, frozen
+    fn run(&self, data: &Snapshot, params: &Self::Params) -> Result<Metrics>;
+}
+
+trait Runs { fn record(&mut self, run: &Run) -> Result<()>; }   // a JSON-lines file here;
+                                                                // morpheme's is its database
+fn sweep<F: Formulation>(f: &F, data: &Snapshot, grid: impl Iterator<Item = F::Params>,
+                         runs: &mut impl Runs) -> Result<Vec<Run>>;
+```
+
+- **A snapshot is a file,** `<hash>.jsonl`, the hash of its bytes. A run names its snapshot, so a
+  result says exactly what it came from, and running again on the same file is the same run.
+- **Runs, like sinks, are a trait with a file behind it here.** Where morpheme keeps them is
+  morpheme's.
 - **Split by time.** Train on the past, test on the future. On personal data a random split leaks
-  and flatters.
+  and flatters. A helper takes rows with a time and a cut and returns the two halves; which field
+  is the time is the formulation's.
+- **Metrics are the formulation's,** a flat map of name to number, so a sweep's runs compare side
+  by side.
+- **The sweep runner is the one from the phoneme sweeps,** brought over: a grid, one run per point,
+  the results table sorted by a metric the caller names.
 - **Pull out what's shared after the second formulation, not before.** Until then, what repeats is
   a guess.
 
@@ -120,7 +158,8 @@ publish    the artifact, where apps get it  morpheme hands it to the `model` app
 
 ## 7. The first formulation: a thread's category
 
-A candidate, to be measured rather than assumed.
+A candidate, to be measured rather than assumed. Where its data comes from and how it reaches the
+app are morpheme's (its §8); the model is here.
 
 - **Input:** a thread's text. **Output:** its category, prefilled on add when confident.
 - **Encoder:** GloVe (or fastText, for words GloVe doesn't have) mean-pooled. In the sweeps,
@@ -130,8 +169,30 @@ A candidate, to be measured rather than assumed.
   output layer has an untrained neuron for every new one. A prototype is the mean of its threads'
   embeddings, with the category name's as a prior, so every change works at once. What words mean
   is pretrained; what my categories mean is data.
-- **Events:** `thread.add` with the text, what was suggested (if anything), and what was chosen.
-  The gap between the last two is the label and the feedback loop in one.
+- **So the first artifact is only the embedding table.** The prototypes are built in the app from
+  the threads it holds, every time they change. Nothing is trained on my data until the second
+  version.
+- **The second version learns a projection:** a small linear map over the GloVe vectors, trained
+  with a contrastive loss so threads filed together sit closer. It never names a category, so it
+  survives every change to them. Worth it only if it beats the first on the same split.
+
+**Evaluated by replaying adds in time order.** For each thread, oldest first, prototypes are built
+from the threads before it, and the prediction is scored against what it was filed under. That is
+the situation the app is in at every add.
+
+| metric | what |
+|---|---|
+| top-1 | the nearest prototype was the category |
+| top-3 | it was among the three nearest (chips the form could put first) |
+| coverage at τ | share of adds where the margin clears τ, and top-1 among those: the prefill's real rate |
+| new | adds whose category didn't exist yet: the model can't be right, and should be unsure |
+
+**Baselines, on the same replay:** the most common category so far; the most recent category used;
+the category name prior alone. A model that doesn't beat "the last one I used" isn't worth a
+prefill.
+
+**Sweep:** embeddings (GloVe 50d, 100d, 300d; fastText), vocabulary cut (20k, 50k, 100k), name-prior
+weight, τ.
 
 ---
 
@@ -146,17 +207,9 @@ cd site && npm run build
 
 ---
 
-## 9. Order
+## 9. Open
 
-1. **trace.** Done.
-2. **A few `emit`s in threads**, sent to a file sink on the rig. Events only exist from the day
-   they start being kept.
-3. **morpheme**, with its SurrealDB sink, once events should gather from more than one device.
-4. **The lab and the first formulation**, once there's data to train on.
-5. **The runtime**, once a formulation earns a place in an app.
-
-## 10. Open
-
-- When an app sends: on close, beside its own sync, or on a press of its own.
-- Whether the log needs rotating. An event is around a hundred bytes; measure before building it.
-- Which events threads emits, beyond `thread.add`.
+- Whether the log needs rotating. Most events are around a hundred bytes; jobs' capture events
+  carry a whole page. Measure before building it.
+- Where the embedding tables come from: downloaded once into the lab's data folder, and cut there.
+  Whether the source files are kept or only the cuts.
