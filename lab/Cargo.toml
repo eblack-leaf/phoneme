@@ -1,0 +1,18 @@
+[package]
+name = "phoneme-lab"
+description = "Posing problems as ML and measuring them: formulations, frozen snapshots, runs and sweeps"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+phoneme-runtime = { path = "../runtime" }
+serde.workspace = true
+serde_json.workspace = true
+# A snapshot is named by the hash of its bytes.
+sha2.workspace = true
+# Pretrained vectors, fetched once.
+ureq.workspace = true
+zip.workspace = true

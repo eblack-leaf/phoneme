@@ -1,0 +1,12 @@
+[package]
+name = "phoneme-runtime"
+description = "Running a model in an app: on CPU, loaded from a path, and nothing used for training"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# The vectors are f16 on disk and f32 in memory.
+half.workspace = true

@@ -1,7 +1,7 @@
 # phoneme
 
-What phoneme is and what has been decided. `trace/` is built and in use; the runtime and the lab
-are specified here and not written.
+What phoneme is and what has been decided. `trace/`, `runtime/` and `lab/` are built; `trace/` is
+in use in the suite.
 
 ---
 
@@ -27,7 +27,7 @@ for my apps.
 |---|---|---|
 | trace | events, `emit`, `send`, the `Sink` trait, a file sink | a SurrealDB sink into its own ns/db, credentials through ops |
 | runtime | load a model from a path, run it on CPU | find the path through the `model` app |
-| lab | runs, snapshots, the sweep runner; sources are files | the reader over the apps and the events; runs in its database; formulations over the apps' data |
+| lab | runs, snapshots, the sweep runner | the reader over the apps and the events; runs in its database; formulations over the apps' data |
 | formulations | public datasets | threads, jobs, usage patterns |
 
 - **The rule.** Anything that names datum, ops, credentials, the `model` app or an app's types is
@@ -45,7 +45,7 @@ for my apps.
 | **trace** | one app's events on one device: a log and how far into it has been sent |
 | **sink** | where sent events go. The trace doesn't know what's behind it |
 | **formulation** | one problem posed as ML: what it reads, how it builds inputs, the model, what counts as right |
-| **snapshot** | the data a run was trained and tested on, frozen, so a result says what it came from |
+| **snapshot** | which data a run was trained and tested on, as a pointer: everything up to a moment, and a fingerprint of what that read gave |
 | **run** | one formulation, one snapshot, one set of parameters, and what it scored |
 | **artifact** | the trained model a run produced |
 
@@ -85,15 +85,19 @@ is; phoneme doesn't.
 
 ## 5. runtime
 
-Not written. `runtime/`, crate `phoneme-runtime`: what an app links to use a model. Apps reach it
+Built. `runtime/`, crate `phoneme-runtime`: what an app links to use a model. Apps reach it
 through morpheme, as they reach the trace.
 
 ```rust
-let words = Embeddings::load(path)?;          // a pruned table: word -> vector, f16 on disk
-let v: Vec<f32> = words.mean(text);           // tokenise, look up, mean-pool; None-words skipped
-let head = Prototypes::new(named_vectors);    // label -> mean vector, built by the caller
-let best: Option<(label, score, margin)> = head.nearest(&v);
+let words = Embeddings::load(path)?;             // a pruned table: word -> vector, f16 on disk
+let v: Option<Vec<f32>> = words.mean(text);      // tokenise, look up, mean-pool; None if no word is known
+let mut builder = Builder::new(words.dim());     // label -> the mean of its examples' directions
+builder.add("home", &v);
+let head = builder.build(&words, prior);         // each label's own name counts as `prior` examples
+let best: Option<Nearest> = head.nearest(&v);    // label, cosine, margin over the next
 ```
+
+- **The builder is shared, so the lab's replay and the app build prototypes the same way.**
 
 - **CPU only, and nothing used for training.** An app pulls in no burn autodiff and no dataset
   code. The first model is a table lookup and a mean, which needs no framework at all; burn's
@@ -101,14 +105,16 @@ let best: Option<(label, score, margin)> = head.nearest(&v);
 - **Loaded from a path.** Which path, and which version, is morpheme's (the `model` app).
 - **The tokeniser is the lab's, byte for byte.** Lowercase, split on anything not a letter or
   digit, the same in training and in the app. One function, here, used by both.
-- **Embeddings on disk:** a header (dimension, word count), the words, then the vectors as f16.
-  GloVe 100d cut to the 50k most frequent words is about 10 MB.
+- **Embeddings on disk:** `PHNMEMB1`, the dimension and word count as `u32`s, each word as a
+  `u16` length and its bytes, then the vectors as f16, most frequent word first. So the first `n`
+  words of a file are a smaller cut of it (`Embeddings::load_top`). GloVe 100d cut to the 50k most
+  frequent words is about 10 MB.
 
 ---
 
 ## 6. lab
 
-Not written. `lab/`, crate `phoneme-lab`.
+Built. `lab/`, crate `phoneme-lab`.
 
 **A formulation owns its problem:** what it reads, how it builds its inputs, the model, what counts
 as right, and how it's evaluated. There is no shared featurising by field type, and no fixed set of
@@ -119,7 +125,7 @@ task kinds. Each problem is posed on its own.
 ```
 read       where the data comes from        suite data (morpheme's reader), trace events,
                                             a public dataset, or nothing (a pretrained model)
-snapshot   what it was, frozen              rows as JSON lines in a file named by its hash
+snapshot   what it was, as a pointer        `until` and a fingerprint; the rows are never kept
 run        formulation@version, snapshot,   one row per run; a sweep is many runs
            params, metrics
 publish    the artifact, where apps get it  morpheme hands it to the `model` app
@@ -130,7 +136,7 @@ trait Formulation {
     const NAME: &str;
     const VERSION: u32;                    // bumped when what it reads or scores changes
     type Params: Serialize;
-    fn read(&self) -> Result<Snapshot>;    // the formulation's own query, frozen
+    fn read(&self, until: u64) -> Result<Snapshot>;   // its own query, up to `until`
     fn run(&self, data: &Snapshot, params: &Self::Params) -> Result<Metrics>;
 }
 
@@ -140,8 +146,11 @@ fn sweep<F: Formulation>(f: &F, data: &Snapshot, grid: impl Iterator<Item = F::P
                          runs: &mut impl Runs) -> Result<Vec<Run>>;
 ```
 
-- **A snapshot is a file,** `<hash>.jsonl`, the hash of its bytes. A run names its snapshot, so a
-  result says exactly what it came from, and running again on the same file is the same run.
+- **A snapshot is a pointer, not a copy:** `until`, the moment the read covered everything up to,
+  and a fingerprint (16 hex digits of the SHA-256 of the rows as read). The rows are held while
+  the runs use them and never written anywhere, so data that grows doesn't pile up copies of
+  itself. Reading an append-only source up to the same `until` again is the same data; a source
+  whose records are edited may not be, and a different fingerprint says so.
 - **Runs, like sinks, are a trait with a file behind it here.** Where morpheme keeps them is
   morpheme's.
 - **Split by time.** Train on the past, test on the future. On personal data a random split leaks
@@ -149,8 +158,11 @@ fn sweep<F: Formulation>(f: &F, data: &Snapshot, grid: impl Iterator<Item = F::P
   is the time is the formulation's.
 - **Metrics are the formulation's,** a flat map of name to number, so a sweep's runs compare side
   by side.
-- **The sweep runner is the one from the phoneme sweeps,** brought over: a grid, one run per point,
-  the results table sorted by a metric the caller names.
+- **The sweep:** a `Grid` of named axes, crossed into parameters; one run per point, each recorded
+  as it lands; `table` shows the parameters that differ between runs and every metric, sorted by
+  the metric the caller names.
+- **Vectors** (`vectors`): GloVe 6B fetched once, cut to its most frequent words as `.emb` files,
+  and the download removed. `cut` reads GloVe's text and fastText's `.vec` alike.
 - **Pull out what's shared after the second formulation, not before.** Until then, what repeats is
   a guess.
 
@@ -194,6 +206,15 @@ prefill.
 **Sweep:** embeddings (GloVe 50d, 100d, 300d; fastText), vocabulary cut (20k, 50k, 100k), name-prior
 weight, τ.
 
+**What it is:** a nearest-centroid classifier (Rocchio) over a frozen, pretrained encoder.
+Supervised, since the categories are the labels, but fit in closed form: a prototype is an average,
+so there's nothing to optimise and no burn. The name prior is a hyperparameter, a pseudo-count: a
+Bayesian prior on each category's mean, centred on what its name means, worth `prior` examples.
+
+**First result, on my threads** (morpheme §8): 45.8% top-1 against 42.2% for the last category
+used. Not worth a prefill. The recency the text can't see is the next thing to add, with the first
+learned weights, scored walk-forward.
+
 ---
 
 ## 8. site
@@ -211,5 +232,5 @@ cd site && npm run build
 
 - Whether the log needs rotating. Most events are around a hundred bytes; jobs' capture events
   carry a whole page. Measure before building it.
-- Where the embedding tables come from: downloaded once into the lab's data folder, and cut there.
-  Whether the source files are kept or only the cuts.
+- fastText vectors: `cut` reads them, nothing fetches them yet. They're 600 MB more, for words
+  GloVe doesn't have.

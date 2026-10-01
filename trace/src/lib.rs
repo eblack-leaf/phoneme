@@ -51,7 +51,12 @@ impl Event {
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
-        Self { at, app: String::new(), name: name.into(), fields: BTreeMap::new() }
+        Self {
+            at,
+            app: String::new(),
+            name: name.into(),
+            fields: BTreeMap::new(),
+        }
     }
 
     pub fn set(mut self, key: impl Into<String>, value: impl Into<Value>) -> Self {
@@ -122,11 +127,13 @@ impl Trace {
     /// [`dropped`](Self::dropped) says how many have been.
     pub fn emit(&self, mut event: Event) {
         event.app.clone_from(&self.app);
-        let written = serde_json::to_vec(&event).map_err(io::Error::from).and_then(|mut line| {
-            line.push(b'\n');
-            // One write per line, so two processes emitting at once don't interleave.
-            append(&self.log, &line)
-        });
+        let written = serde_json::to_vec(&event)
+            .map_err(io::Error::from)
+            .and_then(|mut line| {
+                line.push(b'\n');
+                // One write per line, so two processes emitting at once don't interleave.
+                append(&self.log, &line)
+            });
         if written.is_err() {
             self.dropped.fetch_add(1, Ordering::Relaxed);
         }
@@ -231,7 +238,11 @@ mod tests {
     #[test]
     fn sends_what_was_emitted_once() {
         let trace = Trace::open(scratch(), "threads");
-        trace.emit(Event::new("thread.add").set("category", "home").set("words", 3));
+        trace.emit(
+            Event::new("thread.add")
+                .set("category", "home")
+                .set("words", 3),
+        );
         trace.emit(Event::new("chip.send"));
 
         let mut got = Vec::new();
@@ -255,7 +266,10 @@ mod tests {
 
         let mut got = Vec::new();
         trace.send(&mut got).unwrap();
-        assert_eq!(got.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(), ["two"]);
+        assert_eq!(
+            got.iter().map(|e| e.name.as_str()).collect::<Vec<_>>(),
+            ["two"]
+        );
     }
 
     #[test]
@@ -277,7 +291,11 @@ mod tests {
 
         let mut got = Vec::new();
         assert_eq!(trace.send(&mut got).unwrap(), 1);
-        append(&dir.join("a.jsonl"), br#""name":"two","fields":{}}"#.as_slice()).unwrap();
+        append(
+            &dir.join("a.jsonl"),
+            br#""name":"two","fields":{}}"#.as_slice(),
+        )
+        .unwrap();
         append(&dir.join("a.jsonl"), b"\n").unwrap();
         assert_eq!(trace.send(&mut got).unwrap(), 1);
         assert_eq!(got[1].name, "two");
